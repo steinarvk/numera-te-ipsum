@@ -129,12 +129,30 @@ def add_question(conn, user_id, question, low_label, high_label,
   (sq_id,) = sql_op(conn, "create question", query).inserted_primary_key
   logging.info("created question #%d", sq_id)
   
+def maybe_auth(conn, username, skip_auth):
+  if skip_auth:
+    return get_user_id(conn, username)
+  else:
+    return verify_user_interactive(conn, username)
+
+def question_queue_query(user_id):
+  return sql.select([model.survey_questions]).where(
+    model.survey_questions.c.user_id_owner == user_id
+  ).order_by(model.survey_questions.c.next_trigger.asc())
+
+def peek_question(conn, user_id):
+  query = question_queue_query(user_id)
+  row = sql_op(conn, "fetch question", query).fetchone()
+  return dict(row)
+
+def peek_question_interactive(conn, username, skip_auth=False):
+  user_id = maybe_auth(conn, username, skip_auth)
+  row = peek_question(conn, user_id)
+  for key, value in row.items():
+    print key, "\t", value
 
 def add_question_interactive(conn, username, skip_auth=False):
-  if skip_auth:
-    user_id = get_user_id(conn, username)
-  else:
-    user_id = verify_user_interactive(conn, username)
+  user_id = maybe_auth(conn, username, skip_auth)
   data = cli_query_form(
     ("question", "question", True, str),
     ("low_label", "lower/left label", True, str),

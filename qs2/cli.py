@@ -64,6 +64,10 @@ def parse_args(argv):
     ("username", str, "username of user"),
     ("--skip_auth", bool, "skip authentication check"),
   )
+  mkparser("peek_question", qs2.operations.peek_question_interactive,
+    "peek at the next question in the queue",
+    ("username", str, "username of user"),
+  )
 
   return parser.parse_args(argv)
 
