@@ -2,3 +2,5 @@ credentials/
 env/
 *.pyc
 *.swp
+.coverage
+htmlcov/

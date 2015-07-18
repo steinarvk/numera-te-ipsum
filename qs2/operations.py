@@ -1,13 +1,14 @@
 from qs2 import model
 import qs2.users
 import qs2.validation
-import getpass
 import datetime
 import users
 import logging
 import time
 import qs2.logutil
 import sqlalchemy
+
+from qs2 import ui
 
 from sqlalchemy import sql
 
@@ -23,23 +24,23 @@ def sql_op(name, func):
     return result
 
 def strict_confirm(message):
-  confirm = raw_input("{} ['yes' to continue] ".format(message))
+  confirm = ui.UI.raw_input("{} ['yes' to continue] ".format(message))
   if confirm.strip() != "yes":
     raise OperationFailed("user aborted")
 
 def confirm(message):
   while True:
-    letter = raw_input("{} [Yn] ".format(message)).lower()
+    letter = ui.UI.raw_input("{} [Yn] ".format(message)).lower()
     if letter in ("", "y"):
       return
     if letter == "n":
       raise OperationFailed("user aborted")
 
-def full_reset():
+def drop_all():
   strict_confirm("Really delete the entire database, losing all data?")
-  with qs2.logutil.section("deleting the database"):
-    model.metadata.delete_all()
-  initialize()
+  with qs2.logutil.section("dropping the database"):
+    model.metadata.reflect()
+    model.metadata.drop_all()
 
 def initialize():
   with qs2.logutil.section("initializing the database"):
@@ -77,7 +78,7 @@ def authenticate_user(username, password):
     return row["user_id"]
 
 def verify_user_interactive(username):
-  password = getpass.getpass("Password for {}: ".format(username))
+  password = ui.UI.getpass("Password for {}: ".format(username))
   user_id = authenticate_user(username, password)
   if not user_id:
     raise OperationFailed("authentication failed")
@@ -86,8 +87,8 @@ def verify_user_interactive(username):
 
 def add_user_interactive(username):
   qs2.validation.check("username", username)
-  password = getpass.getpass("Password: ")
-  repeat_password = getpass.getpass("Confirm password: ")
+  password = ui.UI.getpass("Password: ")
+  repeat_password = ui.UI.getpass("Confirm password: ")
   if password != repeat_password:
     raise OperationFailed("user input error -- passwords did not match")
   add_user(username, password)
@@ -95,7 +96,7 @@ def add_user_interactive(username):
 def cli_query_form(*fields):
   rv = {}
   for field_key, field_name, required, convert in fields:
-    text = raw_input("Enter {}: ".format(field_name)).strip()
+    text = ui.UI.raw_input("Enter {}: ".format(field_name)).strip()
     if not required and not text:
       print "{}: skipped".format(field_name)
       continue

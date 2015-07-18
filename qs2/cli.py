@@ -4,27 +4,32 @@ import getpass
 import sys
 import inspect
 import logging
+import getpass
 
 import qs2.operations
 import qs2.logutil
+import qs2.ui
 
 from qs2.error import (OperationFailed, ValidationFailed)
 
-def main(args):
+def engine_from_url_in_file(arg):
+  with open(arg) as credentials_file:
+    return sqlalchemy.engine.create_engine(credentials_file.readline())
+
+def main(args, engine):
   qs2.logutil.setup_logging(args.log_level)
   try:
     with qs2.logutil.section("handling command-line operation"):
-      with open(args.db) as credentials_file:
-        engine = sqlalchemy.engine.create_engine(credentials_file.readline())
       qs2.model.metadata.bind = engine
       argnames = set(inspect.getargspec(args.main).args)
       filtered_args = {k: v for k, v in vars(args).items() if k in argnames}
       args.main(**filtered_args)
+    return 0
   except (OperationFailed, ValidationFailed) as e:
     logging.error("operation failed: %s", e.message)
-    sys.exit(1)
+    return 1
 
-if __name__ == '__main__':
+def parse_args(argv):
   parser = argparse.ArgumentParser(description="QS2 management tool.")
   parser.add_argument("--db", required=True,
                       help="file with database specifier")
@@ -44,8 +49,8 @@ if __name__ == '__main__':
     
   mkparser("init", qs2.operations.initialize,
     "(re-)initialize the database")
-  mkparser("full_reset", qs2.operations.full_reset,
-    "drop all data and recreate the database")
+  mkparser("drop_all", qs2.operations.drop_all,
+    "drop all data")
   add_user_parser = mkparser("add_user", qs2.operations.add_user_interactive,
     "add a user",
     ("username", str, "username of user"),
@@ -60,4 +65,13 @@ if __name__ == '__main__':
     ("--skip_auth", bool, "skip authentication check"),
   )
 
-  main(parser.parse_args())
+  return parser.parse_args(argv)
+
+def run_main(argv, engine=None, ui=None):
+  args = parse_args(argv)
+  engine = engine or engine_from_url_in_file(args.db)
+  qs2.ui.UI = ui or qs2.ui.CliInterface()
+  return main(parse_args(argv), engine)
+
+if __name__ == '__main__':
+  sys.exit(run_main(sys.argv[1:]))
