@@ -1,5 +1,6 @@
 from sqlalchemy import (
   Table, Column, MetaData, ForeignKey,
+  UniqueConstraint,
   Integer, String, ForeignKey, DateTime, Numeric,
 )
 
@@ -12,5 +13,14 @@ requests = Table("requests", metadata,
   Column("client_ip", String),
   Column("url", String),
   Column("referer", String),
-  Column("user_agent", String)
+  Column("user_agent", String),
+)
+
+users = Table("users", metadata,
+  Column("user_id", Integer, primary_key=True),
+  Column("req_id_creator", Integer, ForeignKey("requests.req_id")),
+  Column("timestamp", DateTime),
+  Column("username", String, nullable=False, index=True),
+  Column("password_hash", String, nullable=False),
+  UniqueConstraint("username", name="username_is_unique"),
 )
