@@ -107,6 +107,7 @@ def cli_query_form(*fields):
 def add_question(conn, user_id, question, low_label, high_label,
                  middle_label=None,
                  req_id_creator=None,
+                 active=True,
                  delay_s=3600):
   qs2.validation.check("question", question, secret=True)
   qs2.validation.check("label", low_label, secret=True)
@@ -121,7 +122,7 @@ def add_question(conn, user_id, question, low_label, high_label,
     low_label=low_label,
     high_label=high_label,
     middle_label=middle_label,
-    active=True,
+    active=active,
     mean_delay=datetime.timedelta(seconds=delay_s),
     next_trigger=now,
     req_id_creator=req_id_creator,
@@ -137,7 +138,8 @@ def maybe_auth(conn, username, skip_auth):
 
 def question_queue_query(user_id):
   return sql.select([model.survey_questions]).where(
-    model.survey_questions.c.user_id_owner == user_id
+    (model.survey_questions.c.user_id_owner == user_id) &
+    (model.survey_questions.c.active)
   ).order_by(model.survey_questions.c.next_trigger.asc())
 
 def peek_question(conn, user_id):
