@@ -1,9 +1,9 @@
 import sqlalchemy
 import argparse
-import qs2.tables
+import qs2.model
 
 def init_main(engine):
-  qs2.tables.metadata.create_all(engine)
+  qs2.model.metadata.create_all(engine)
 
 def main(args):
   with open(args.db) as credentials_file:
