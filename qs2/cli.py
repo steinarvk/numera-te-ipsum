@@ -20,10 +20,10 @@ def main(args, engine):
   qs2.logutil.setup_logging(args.log_level)
   try:
     with qs2.logutil.section("handling command-line operation"):
-      qs2.model.metadata.bind = engine
       argnames = set(inspect.getargspec(args.main).args)
       filtered_args = {k: v for k, v in vars(args).items() if k in argnames}
-      args.main(**filtered_args)
+      conn = engine.connect()
+      args.main(conn=conn, **filtered_args)
     return 0
   except (OperationFailed, ValidationFailed) as e:
     logging.error("operation failed: %s", e.message)
