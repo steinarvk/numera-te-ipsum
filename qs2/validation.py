@@ -5,6 +5,8 @@ from qs2.error import ValidationFailed
 Invalidators = {
   "username": users.invalidate_username,
   "password": users.invalidate_password,
+  "question": lambda s: invalidate_length(s, (1, 1024)),
+  "label": lambda s: invalidate_length(s, (1, 128)),
 }
 
 def check(name, value, secret=False, loglevel=logging.DEBUG):

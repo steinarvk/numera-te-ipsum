@@ -22,11 +22,21 @@ def sql_op(name, func):
       raise OperationFailed("SQL operation failed: {}".format(name))
     return result
 
-def full_reset():
-  message = "Really delete the entire database, losing all data?"
+def strict_confirm(message):
   confirm = raw_input("{} ['yes' to continue] ".format(message))
   if confirm.strip() != "yes":
     raise OperationFailed("user aborted")
+
+def confirm(message):
+  while True:
+    letter = raw_input("{} [Yn] ".format(message)).lower()
+    if letter in ("", "y"):
+      return
+    if letter == "n":
+      raise OperationFailed("user aborted")
+
+def full_reset():
+  strict_confirm("Really delete the entire database, losing all data?")
   with qs2.logutil.section("deleting the database"):
     model.metadata.delete_all()
   initialize()
@@ -46,6 +56,15 @@ def add_user(username, password):
   (user_id,) = sql_op("create user", query.execute).inserted_primary_key
   logging.info("created user '%s' (%d)", username, user_id)
 
+def get_user_id(username):
+  query = sql.select([model.users.c.user_id]).where(
+    model.users.c.username == username
+  )
+  row = sql_op("fetch user", query.execute).fetchone()
+  if not row:
+    raise OperationFailed("user ('{}') not found".format(username))
+  return row["user_id"]
+
 def authenticate_user(username, password):
   query = sql.select(
     [model.users.c.user_id,
@@ -58,11 +77,12 @@ def authenticate_user(username, password):
     return row["user_id"]
 
 def verify_user_interactive(username):
-  password = getpass.getpass("Password: ")
+  password = getpass.getpass("Password for {}: ".format(username))
   user_id = authenticate_user(username, password)
   if not user_id:
     raise OperationFailed("authentication failed")
   logging.info("verified as user %d/%s", user_id, username)
+  return user_id
 
 def add_user_interactive(username):
   qs2.validation.check("username", username)
@@ -71,3 +91,57 @@ def add_user_interactive(username):
   if password != repeat_password:
     raise OperationFailed("user input error -- passwords did not match")
   add_user(username, password)
+
+def cli_query_form(*fields):
+  rv = {}
+  for field_key, field_name, required, convert in fields:
+    text = raw_input("Enter {}: ".format(field_name)).strip()
+    if not required and not text:
+      print "{}: skipped".format(field_name)
+      continue
+    rv[field_key] = convert(text)
+    print "{}: '{}'".format(field_name, rv[field_key])
+  return rv
+
+def add_question(user_id, question, low_label, high_label,
+                 middle_label=None,
+                 req_id_creator=None,
+                 delay_s=3600):
+  qs2.validation.check("question", question, secret=True)
+  qs2.validation.check("label", low_label, secret=True)
+  qs2.validation.check("label", high_label, secret=True)
+  if middle_label:
+    qs2.validation.check("label", middle_label, secret=True)
+  now = datetime.datetime.now()
+  query = model.survey_questions.insert().values(
+    timestamp=now,
+    user_id_owner=user_id,
+    question=question,
+    low_label=low_label,
+    high_label=high_label,
+    middle_label=middle_label,
+    active=True,
+    mean_delay=datetime.timedelta(seconds=delay_s),
+    next_trigger=now,
+    req_id_creator=req_id_creator,
+  )
+  (sq_id,) = sql_op("create question", query.execute).inserted_primary_key
+  logging.info("created question #%d", sq_id)
+  
+
+def add_question_interactive(username, skip_auth=False):
+  if skip_auth:
+    user_id = get_user_id(username)
+  else:
+    user_id = verify_user_interactive(username)
+  data = cli_query_form(
+    ("question", "question", True, str),
+    ("low_label", "lower/left label", True, str),
+    ("high_label", "upper/right label", True, str),
+    ("middle_label", "middle label", False, str),
+    ("delay_s", "mean delay (seconds)", False, int),
+  )
+  for key, value in data.items():
+    print key, "\t", value
+  confirm("Add this question?")
+  add_question(user_id=user_id, **data)

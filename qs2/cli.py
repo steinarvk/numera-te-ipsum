@@ -36,7 +36,10 @@ if __name__ == '__main__':
     rv = subparsers.add_parser(name, help=desc)
     rv.set_defaults(main=func)
     for arg_name, arg_type, arg_help in args:
-      rv.add_argument(arg_name, type=arg_type, help=arg_help)
+      if arg_type == bool:
+        rv.add_argument(arg_name, action="store_true", help=arg_help)
+      else:
+        rv.add_argument(arg_name, type=arg_type, help=arg_help)
     return rv
     
   mkparser("init", qs2.operations.initialize,
@@ -50,6 +53,11 @@ if __name__ == '__main__':
   mkparser("verify_user", qs2.operations.verify_user_interactive,
     "check the password of a user on the CLI",
     ("username", str, "username of user"),
+  )
+  mkparser("add_question", qs2.operations.add_question_interactive,
+    "add a question interactively",
+    ("username", str, "username of user"),
+    ("--skip_auth", bool, "skip authentication check"),
   )
 
   main(parser.parse_args())
