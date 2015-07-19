@@ -77,6 +77,11 @@ def parse_args(argv):
     ("value", decimal.Decimal, "answer value (between 0 and 1)"),
     ("--skip_auth", bool, "skip authentication check"),
   )
+  mkparser("survey", qs2.operations.survey_interactive,
+    "post an answer to a question",
+    ("username", str, "username of user"),
+    ("--accept_stale", bool, "include questions that were recently answered"),
+  )
 
   return parser.parse_args(argv)
 

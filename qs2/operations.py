@@ -3,6 +3,7 @@ import qs2.users
 import qs2.validation
 import datetime
 import users
+import decimal
 import logging
 import time
 import qs2.logutil
@@ -179,7 +180,8 @@ def post_answer(conn, user_id, question_id, value, req_id_creator=None):
   qs2.validation.check("survey_value", value)
   with conn.begin() as trans:
     question = fetch_question(conn, user_id, question_id,
-      model.survey_questions.c.mean_delay)
+      model.survey_questions.c.mean_delay,
+      model.survey_questions.c.next_trigger)
     delay = randomize_next_delay(question["mean_delay"])
     logging.info("delaying for %s", delay)
     query = model.survey_answers.insert().values(
@@ -191,8 +193,8 @@ def post_answer(conn, user_id, question_id, value, req_id_creator=None):
     )
     sql_op(conn, "create answer", query)
     query = model.survey_questions.update().values(
-      next_trigger=now+delay,
-    )
+      next_trigger = now + delay,
+    ).where(model.survey_questions.c.sq_id == question_id)
     sql_op(conn, "update next question trigger", query)
 
 def post_answer_interactive(conn, username, question_id, value, skip_auth=False):
@@ -217,3 +219,30 @@ def add_question_interactive(conn, username, skip_auth=False):
     print key, "\t", value
   confirm("Add this question?")
   add_question(conn, user_id=user_id, **data)
+
+def format_scale(q):
+  rv = []
+  for key, value in zip(("low_label", "middle_label", "high_label"),
+                        (0, 50, 100)):
+    if key in q:
+      rv.append("{} ({}%)".format(q[key], value))
+  return " ... ".join(rv)
+
+def display_question(q):
+  print "Question:", q["question"]
+  print "Trigger time:", q["next_trigger"]
+  print format_scale(q)
+
+def survey_interactive(conn, username, accept_stale=False):
+  user_id = verify_user_interactive(conn, username)
+  while True:
+    now = datetime.datetime.now()
+    q = peek_question(conn, user_id)
+    stale = q["next_trigger"] > now
+    if stale and not accept_stale:
+      break
+    display_question(q)
+    value = qs2.validation.ask("survey_value", decimal.Decimal,
+                               ui.UI.raw_input, logging.error)
+    now = datetime.datetime.now()
+    post_answer(conn, user_id, q["sq_id"], value)

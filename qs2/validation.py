@@ -2,6 +2,21 @@ import users
 import logging
 from qs2.error import ValidationFailed
 
+def ask(name, parser, query, complain, secret=False, loglevel=logging.DEBUG):
+  while True:
+    s = query()
+    try:
+      v = parser(s)
+    except Exception as e:
+      complain("invalid value: {}".format(e.message))
+      continue
+    try:
+      check(name, v, secret=secret, loglevel=loglevel)
+    except ValidationFailed as e:
+      complain("invalid value: {}".format(e.message))
+      continue
+    return v
+
 def check(name, value, secret=False, loglevel=logging.DEBUG):
   try:
     checker = Invalidators[name]
@@ -44,4 +59,3 @@ Invalidators = {
   "label": lambda s: invalidate_length(s, (1, 128)),
   "survey_value": number_invalidator(0, 1),
 }
-
