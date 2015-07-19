@@ -5,6 +5,7 @@ import sys
 import inspect
 import logging
 import getpass
+import decimal
 
 import qs2.operations
 import qs2.logutil
@@ -67,6 +68,14 @@ def parse_args(argv):
   mkparser("peek_question", qs2.operations.peek_question_interactive,
     "peek at the next question in the queue",
     ("username", str, "username of user"),
+    ("--skip_auth", bool, "skip authentication check"),
+  )
+  mkparser("post_answer", qs2.operations.post_answer_interactive,
+    "post an answer to a question",
+    ("username", str, "username of user"),
+    ("question_id", int, "question ID"),
+    ("value", decimal.Decimal, "answer value (between 0 and 1)"),
+    ("--skip_auth", bool, "skip authentication check"),
   )
 
   return parser.parse_args(argv)

@@ -2,13 +2,6 @@ import users
 import logging
 from qs2.error import ValidationFailed
 
-Invalidators = {
-  "username": users.invalidate_username,
-  "password": users.invalidate_password,
-  "question": lambda s: invalidate_length(s, (1, 1024)),
-  "label": lambda s: invalidate_length(s, (1, 128)),
-}
-
 def check(name, value, secret=False, loglevel=logging.DEBUG):
   try:
     checker = Invalidators[name]
@@ -35,4 +28,20 @@ def invalidate_chars(s, legal):
   for ch in s:
     if ch not in legal:
       return "illegal character '{}'".format(ch)
+
+def number_invalidator(min_, max_):
+  def f(x):
+    if x < min_:
+      return "{} is below minimal allowed value {}".format(x, min_)
+    if x > max_:
+      return "{} is above maximal allowed value {}".format(x, max_)
+  return f
+
+Invalidators = {
+  "username": users.invalidate_username,
+  "password": users.invalidate_password,
+  "question": lambda s: invalidate_length(s, (1, 1024)),
+  "label": lambda s: invalidate_length(s, (1, 128)),
+  "survey_value": number_invalidator(0, 1),
+}
 

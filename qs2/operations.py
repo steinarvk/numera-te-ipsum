@@ -7,6 +7,7 @@ import logging
 import time
 import qs2.logutil
 import sqlalchemy
+import random
 
 from qs2 import ui
 
@@ -147,11 +148,61 @@ def peek_question(conn, user_id):
   row = sql_op(conn, "fetch question", query).fetchone()
   return dict(row)
 
+def fetch_question(conn, user_id, question_id, *columns):
+  if not columns:
+    columns = [model.survey_questions]
+  query = sql.select(columns).where(
+    (model.survey_questions.c.user_id_owner == user_id) &
+    (model.survey_questions.c.sq_id == question_id)
+  )
+  return dict(sql_op(conn, "fetch question by ID", query).fetchone())
+
 def peek_question_interactive(conn, username, skip_auth=False):
   user_id = maybe_auth(conn, username, skip_auth)
   row = peek_question(conn, user_id)
   for key, value in row.items():
     print key, "\t", value
+
+def symmetric_truncated_gauss(sigma, clip):
+  assert clip > 0
+  while True:
+    rv = random.gauss(0, sigma)
+    if abs(rv) < clip:
+      return rv
+
+def randomize_next_delay(mean_delay):
+  k = 1 + symmetric_truncated_gauss(0.5, 1)
+  return datetime.timedelta(seconds=k * mean_delay.total_seconds())
+
+def post_answer(conn, user_id, question_id, value, req_id_creator=None):
+  now = datetime.datetime.now()
+  qs2.validation.check("survey_value", value)
+  with conn.begin() as trans:
+    question = fetch_question(conn, user_id, question_id,
+      model.survey_questions.c.mean_delay)
+    delay = randomize_next_delay(question["mean_delay"])
+    logging.info("delaying for %s", delay)
+    query = model.survey_answers.insert().values(
+      timestamp=now,
+      user_id_owner=user_id,
+      sq_id=question_id,
+      value=value,
+      req_id_creator=req_id_creator,
+    )
+    sql_op(conn, "create answer", query)
+    query = model.survey_questions.update().values(
+      next_trigger=now+delay,
+    )
+    sql_op(conn, "update next question trigger", query)
+
+def post_answer_interactive(conn, username, question_id, value, skip_auth=False):
+  qs2.validation.check("survey_value", value)
+  user_id = maybe_auth(conn, username, skip_auth)
+  question = fetch_question(conn, user_id, question_id)
+  confirm("Answer {} to question '{}'? (0 = {}, 1 = {})".format(
+    value, question["question"], question["low_label"], question["high_label"],
+  ))
+  post_answer(conn, user_id, question_id, value)
 
 def add_question_interactive(conn, username, skip_auth=False):
   user_id = maybe_auth(conn, username, skip_auth)
