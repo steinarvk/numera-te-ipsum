@@ -58,6 +58,7 @@ def add_user(conn, username, password):
   )
   (user_id,) = sql_op(conn, "create user", query).inserted_primary_key
   logging.info("created user '%s' (%d)", username, user_id)
+  return user_id
 
 def get_user_id(conn, username):
   query = sql.select([model.users.c.user_id]).where(
@@ -131,6 +132,7 @@ def add_question(conn, user_id, question, low_label, high_label,
   )
   (sq_id,) = sql_op(conn, "create question", query).inserted_primary_key
   logging.info("created question #%d", sq_id)
+  return sq_id
   
 def maybe_auth(conn, username, skip_auth):
   if skip_auth:
@@ -144,6 +146,26 @@ def question_queue_query(user_id):
     (model.survey_questions.c.active)
   ).order_by(model.survey_questions.c.next_trigger.asc())
 
+def get_all_questions(conn, user_id, *columns):
+  if not columns:
+    columns = [model.survey_questions]
+  query = sql.select(columns).where(
+    (model.survey_questions.c.user_id_owner == user_id)
+  ).order_by(model.survey_questions.c.timestamp.asc())
+  return map(dict, sql_op(conn, "fetch questions", query).fetchall())
+
+def get_pending_questions(conn, user_id, *columns):
+  if not columns:
+    columns = [model.survey_questions]
+  now = datetime.datetime.now()
+  query = sql.select(columns).where(
+    (model.survey_questions.c.user_id_owner == user_id) &
+    (model.survey_questions.c.active) &
+    (model.survey_questions.c.next_trigger < now)
+  ).order_by(model.survey_questions.c.next_trigger.asc())
+  return map(dict, sql_op(conn, "fetch pending questions", query).fetchall())
+
+
 def peek_question(conn, user_id):
   query = question_queue_query(user_id)
   row = sql_op(conn, "fetch question", query).fetchone()
@@ -156,7 +178,9 @@ def fetch_question(conn, user_id, question_id, *columns):
     (model.survey_questions.c.user_id_owner == user_id) &
     (model.survey_questions.c.sq_id == question_id)
   )
-  return dict(sql_op(conn, "fetch question by ID", query).fetchone())
+  row = sql_op(conn, "fetch question by ID", query).fetchone()
+  if row:
+    return dict(row)
 
 def peek_question_interactive(conn, username, skip_auth=False):
   user_id = maybe_auth(conn, username, skip_auth)
@@ -191,11 +215,12 @@ def post_answer(conn, user_id, question_id, value, req_id_creator=None):
       value=value,
       req_id_creator=req_id_creator,
     )
-    sql_op(conn, "create answer", query)
+    (answer_id,) = sql_op(conn, "create answer", query).inserted_primary_key
     query = model.survey_questions.update().values(
       next_trigger = now + delay,
     ).where(model.survey_questions.c.sq_id == question_id)
     sql_op(conn, "update next question trigger", query)
+    return answer_id
 
 def post_answer_interactive(conn, username, question_id, value, skip_auth=False):
   qs2.validation.check("survey_value", value)

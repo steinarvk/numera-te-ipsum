@@ -2,20 +2,24 @@ import users
 import logging
 from qs2.error import ValidationFailed
 
+def parse_as(name, parser, string, secret=False, loglevel=logging.DEBUG):
+  try:
+    v = parser(string)
+  except Exception as e:
+    if secret:
+      message = "parsing failed"
+    else:
+      message = "parsing failed: {}".format(e.message)
+    raise ValidationFailed(message)
+  check(name, v, secret=secret, loglevel=loglevel)
+  return v
+
 def ask(name, parser, query, complain, secret=False, loglevel=logging.DEBUG):
   while True:
-    s = query()
     try:
-      v = parser(s)
-    except Exception as e:
-      complain("invalid value: {}".format(e.message))
-      continue
-    try:
-      check(name, v, secret=secret, loglevel=loglevel)
+      return parse_as(name, parser, query(), secret=secret, loglevel=loglevel)
     except ValidationFailed as e:
       complain("invalid value: {}".format(e.message))
-      continue
-    return v
 
 def check(name, value, secret=False, loglevel=logging.DEBUG):
   try:
