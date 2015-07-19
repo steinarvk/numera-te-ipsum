@@ -40,7 +40,7 @@ def oops(message, code=404):
   rv.status_code = code
   return rv
 
-@app.route("/qs/u/", methods=["POST"])
+@app.route("/u/", methods=["POST"])
 def register_new_user():
   conn = engine.connect()
   with conn.begin() as trans:
@@ -56,7 +56,7 @@ def check_user(conn, login_id, username):
   if user_id != login_id:
     raise AccessDenied()
 
-@app.route("/qs/u/<username>/questions", methods=["GET"])
+@app.route("/u/<username>/questions", methods=["GET"])
 @secure
 def get_questions(login_id, username):
   conn = engine.connect()
@@ -66,7 +66,7 @@ def get_questions(login_id, username):
     qjsons = map(qs2.qsjson.survey_question_json, qs)
     return flask.jsonify(questions=qjsons)
     
-@app.route("/qs/u/<username>/questions", methods=["POST"])
+@app.route("/u/<username>/questions", methods=["POST"])
 @secure
 def post_new_question(login_id, username):
   conn = engine.connect()
@@ -80,7 +80,7 @@ def post_new_question(login_id, username):
       high_label=arg["high"])
     return flask.jsonify(status="ok", question_id=question_id)
 
-@app.route("/qs/u/<username>/questions/<int:sq_id>", methods=["GET"])
+@app.route("/u/<username>/questions/<int:sq_id>", methods=["GET"])
 @secure
 def get_question(login_id, username, sq_id):
   conn = engine.connect()
@@ -97,7 +97,7 @@ def get_question(login_id, username, sq_id):
     qjson = qs2.qsjson.survey_question_json(q)
     return flask.jsonify(question=qjson)
 
-@app.route("/qs/u/<username>/questions/<int:sq_id>/answer", methods=["POST"])
+@app.route("/u/<username>/questions/<int:sq_id>/answer", methods=["POST"])
 @secure
 def post_answer(login_id, username, sq_id):
   conn = engine.connect()
@@ -116,7 +116,7 @@ def post_answer(login_id, username, sq_id):
     )
     return flask.jsonify(status="ok", answer_id=answer_id)
 
-@app.route("/qs/u/<username>/questions/pending", methods=["GET"])
+@app.route("/u/<username>/questions/pending", methods=["GET"])
 @secure
 def get_queue(login_id, username):
   conn = engine.connect()
