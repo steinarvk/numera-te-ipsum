@@ -6,6 +6,65 @@ td,th {
   text-align: center;
   width: 2em;
 }
+.sliderBackground {
+  width: 100%;
+  height: 6cm;
+  text-size: 100%;
+  background-color: #aaf;
+}
+.sliderBar {
+  position: relative;
+  top: 0px;
+  left: 0px;
+  width: 0px;
+  height: 100%;
+  background-color: #22e;
+}
+.sliderLabel {
+  float: left;
+  width: 100%;
+  height: 100%;
+  color: #ffa;
+  z-index: 100;
+  position: relative;
+  text-align: center;
+  font-size: 5cm;
+  line-height: 5cm;
+  vertical-align: center;
+}
+.sliderLabels {
+  display: block;
+  position: relative;
+  height: 2cm;
+  font-size: 1cm;
+}
+#leftLabel {
+  position: absolute;
+  left: 0;
+  height: 2cm;
+}
+#rightLabel {
+  position: absolute;
+  right: 0;
+  height: 2cm;
+}
+#centerLabel {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  text-align: center;
+}
+#questionText {
+  height: 2cm;
+  width: 100%;
+}
+#submitButton {
+  margin-top: 2cm;
+  height: 2cm;
+  width: 100%;
+}
 </style>
 </head>
 <body>
@@ -18,89 +77,79 @@ td,th {
 </div>
 <div id="surveyForm" style="display: none;">
 <form>
-<table border=0>
+<div id="questionText">
+</div>
+<div class="sliderLabels">
+<div id="leftLabel"></div>
+<div id="centerLabel"></div>
+<div id="rightLabel"></div>
+</div>
+<div class="choiceSlider"></div>
 <tr>
-<th colspan="11">
-<b id="questionText"/>
-<tr>
-<th colspan="4" style="text-align: left;" id="leftLabel">
-<th colspan="3" id="centerLabel">
-<th colspan="4" style="text-align: right;" id="rightLabel">
-<tr><td>0<td>1<td>2<td>3<td>4<td>5<td>6<td>7<td>8<td>9<td>10
-<tr>
-<td><input name="surveyval" type="radio" value="0.0">
-<td><input name="surveyval" type="radio" value="0.1">
-<td><input name="surveyval" type="radio" value="0.2">
-<td><input name="surveyval" type="radio" value="0.3">
-<td><input name="surveyval" type="radio" value="0.4">
-<td><input name="surveyval" type="radio" value="0.5">
-<td><input name="surveyval" type="radio" value="0.6">
-<td><input name="surveyval" type="radio" value="0.7">
-<td><input name="surveyval" type="radio" value="0.8">
-<td><input name="surveyval" type="radio" value="0.9">
-<td><input name="surveyval" type="radio" value="1.0">
-<tr>
-<th colspan="11">
 <input type="button" value="Submit" id="submitButton">
-</table>
 </div>
 </form>
 <input type="button" value="Re-fetch" id="refetchButton" style="display: none;">
 </body>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script> 
+<script src="lib/hammer.min.js"></script>
+<script src="js/slider.js"></script>
 <script type="text/javascript" language="javascript">
-var currentQ;
-var username, password;
-function fetchQuestion() {
-    var url = "/qs/u/" + username + "/questions/pending"; 
-    $.ajax(url, {
-        username: username,
-        password: password,
-    }).done(function(data) {
-        loadQuestion(data["questions"][0]);
-    });
-}
-function postAnswer(q, v) {
-    var url = "/qs/u/" + username + "/questions/" + q.id + "/answer";
-    var data = JSON.stringify({
-        value: v
-    });
-    $("#message").html(data);
-    $("#surveyForm").hide();
-    $.ajax(url, {
-        username: username,
-        password: password,
-        type: "POST",
-        contentType: "application/json; charset: utf-8",
-        dataType: "json",
-        data: data,
-    }).done(function() {
-        fetchQuestion();
-    });
-}
-function loadQuestion(q) {
-  $("#questionText").html(q.text);
-  $("#leftLabel").html(q.labels.low);
-  $("#centerLabel").html(q.labels.middle || "");
-  $("#rightLabel").html(q.labels.high);
-  $("#surveyForm").show();
-  $("input[name=\"surveyval\"]").attr("checked", false);
-  currentQ = q;
-}
-$("#authButton").click(function() {
-  username = $("#username").val();
-  password = $("#password").val();
-  $("#authForm").hide();
-  $("#refetchButton").show();
-  fetchQuestion();
-});
-$("#refetchButton").click(function() {
-  fetchQuestion();
-});
-$("#submitButton").click(function() {
-  var val = parseFloat($("input[name=\"surveyval\"]:checked").val());
-  postAnswer(currentQ, val);
-  currentQ = null;
+$(function() {
+  var slider = addSlider($(".choiceSlider"), {});
+  var currentQ;
+  var username, password;
+
+  function fetchQuestion() {
+      var url = "/qs/u/" + username + "/questions/pending"; 
+      $.ajax(url, {
+          username: username,
+          password: password,
+      }).done(function(data) {
+          loadQuestion(data["questions"][0]);
+      });
+  }
+  function postAnswer(q, v) {
+      var url = "/qs/u/" + username + "/questions/" + q.id + "/answer";
+      var data = JSON.stringify({
+          value: v * 0.01,
+      });
+      $("#message").html(data);
+      $("#surveyForm").hide();
+      $.ajax(url, {
+          username: username,
+          password: password,
+          type: "POST",
+          contentType: "application/json; charset: utf-8",
+          dataType: "json",
+          data: data,
+      }).done(function() {
+          fetchQuestion();
+      });
+  }
+  function loadQuestion(q) {
+    $("#questionText").html(q.text);
+    $("#leftLabel").html(q.labels.low);
+    $("#centerLabel").html(q.labels.middle || "");
+    $("#rightLabel").html(q.labels.high);
+    $("#surveyForm").show();
+    slider.reset();
+    currentQ = q;
+  }
+  $("#authButton").click(function() {
+    username = $("#username").val();
+    password = $("#password").val();
+    $("#authForm").hide();
+    $("#refetchButton").show();
+    fetchQuestion();
+  });
+  $("#refetchButton").click(function() {
+    fetchQuestion();
+  });
+  $("#submitButton").click(function() {
+    postAnswer(currentQ, slider.getValue());
+    currentQ = null;
+  });
 });
 </script>
 </html>
