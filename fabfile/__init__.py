@@ -41,3 +41,10 @@ def deploy_static():
   run("rm -rf /var/www/qs/static.backup")
   run("mv /var/www/qs/static /var/www/qs/static.backup || true")
   run("mv /var/www/qs/static.new/static /var/www/qs/static")
+
+@task
+def pushall():
+  execute(pack)
+  execute(deploy_app)
+  execute(deploy_static)
+  execute(restart)
