@@ -1,16 +1,15 @@
 <html>
 <head>
+<meta name="viewport" content="width=device-width; initial-scale=1.0; maximum-scale=1.0; user-scalable=0;"/>
 <title>QuantifiedSelf survey</title>
+<link rel="stylesheet" type="text/css" href="css/normalize.css"/>
 <style>
+body {
+
+}
 td,th {
   text-align: center;
   width: 2em;
-}
-.sliderBackground {
-  width: 100%;
-  height: 6cm;
-  text-size: 100%;
-  background-color: #aaf;
 }
 .sliderBar {
   position: relative;
@@ -28,42 +27,54 @@ td,th {
   z-index: 100;
   position: relative;
   text-align: center;
-  font-size: 5cm;
-  line-height: 5cm;
   vertical-align: center;
-}
-.sliderLabels {
-  display: block;
-  position: relative;
-  height: 2cm;
-  font-size: 1cm;
 }
 #leftLabel {
   position: absolute;
   left: 0;
-  height: 2cm;
+  bottom: 0;
+  width: 33%;
 }
 #rightLabel {
   position: absolute;
   right: 0;
-  height: 2cm;
+  bottom: 0;
+  width: 33%;
 }
 #centerLabel {
   position: absolute;
-  left: 0;
-  top: 0;
+  left: 33%;
+  bottom: 0;
   height: 100%;
-  width: 100%;
+  width: 33%;
   text-align: center;
 }
-#questionText {
-  height: 2cm;
+.sliderLabels {
+  display: block;
+  position: absolute;
+  top: 50%;
   width: 100%;
+  height: 25%;
+}
+#questionText {
+  position: absolute;
+  width: 100%;
+  top: 0;
+  height: 25%;
 }
 #submitButton {
-  margin-top: 2cm;
-  height: 2cm;
+  position: absolute;
+  top: 25%;
+  height: 25%;
   width: 100%;
+}
+.sliderBackground {
+  position: absolute;
+  top: 75%;
+  height: 25%;
+  width: 100%;
+  text-size: 100%;
+  background-color: #aaf;
 }
 </style>
 </head>
@@ -133,6 +144,7 @@ $(function() {
     $("#centerLabel").html(q.labels.middle || "");
     $("#rightLabel").html(q.labels.high);
     $("#surveyForm").show();
+    $("#refetchButton").hide();
     slider.reset();
     currentQ = q;
   }

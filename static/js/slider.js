@@ -5,7 +5,7 @@ function addSlider(par, opts) {
       hammer = new Hammer(arenaElement, {}),
       maxScale = opts.maxScale || 100,
       minScale = opts.minScale || 0,
-      speedMul = opts.speedMultiplier || 1.5,
+      speedMul = opts.speedMultiplier || 1.0,
       value, origin;
 
   arenaElement.className = opts.arenaClass || "sliderBackground";
