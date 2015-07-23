@@ -9,9 +9,17 @@ import qs2.operations
 import qs2.qsjson
 
 import qs2.flaskutil
+import qs2.logutil
 
+import qs2.configutil
+import logging
+import os
+
+config = qs2.configutil.Config(os.environ["QS_CONFIG_FILE"])
+qs2.logutil.setup_logging(filename=config["logging.filename"],
+                          level=config.get("logging.level", "info"))
 app = Flask("qs2")
-engine = sqlalchemy.create_engine("postgresql:///quantifiedself")
+engine = sqlalchemy.create_engine(config["database.url"])
 
 def user_page(url, method):
   return qs2.flaskutil.user_page(app, engine, url, method)

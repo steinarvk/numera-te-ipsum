@@ -2,16 +2,21 @@ import logging
 import contextlib
 import time
 
-def setup_logging(log_level_name):
-  log_fmt = "[%(asctime)s] %(message)s"
-  datefmt = "%Y-%m-%d %H:%M:%S"
-  level = {
+def setup_logging(level, filename=None):
+  level_code = {
     "debug": logging.DEBUG,
     "info": logging.INFO,
     "warning": logging.WARNING,
     "error": logging.ERROR,
-  }[log_level_name]
-  logging.basicConfig(format=log_fmt, level=level, datefmt=datefmt)
+  }[level]
+  kwargs = {
+    "format": "[%(asctime)s] %(message)s",
+    "level": level_code,
+    "datefmt": "%Y-%m-%d %H:%M:%S",
+  }
+  if filename:
+    kwargs["filename"] = filename
+  logging.basicConfig(**kwargs)
 
 @contextlib.contextmanager
 def section(name):

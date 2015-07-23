@@ -131,7 +131,7 @@ $(function() {
   var username, password;
 
   function fetchQuestion() {
-      var url = "/qs/u/" + username + "/questions/pending"; 
+      var url = "/qs-api/u/" + username + "/questions/pending"; 
       $.ajax(url, {
           username: username,
           password: password,
@@ -140,7 +140,7 @@ $(function() {
       });
   }
   function skipQuestion(q) {
-      var url = "/qs/u/" + username + "/questions/" + q.id + "/skip";
+      var url = "/qs-api/u/" + username + "/questions/" + q.id + "/skip";
       $.ajax(url, {
           username: username,
           password: password,
@@ -153,7 +153,7 @@ $(function() {
       });
   }
   function postAnswer(q, v) {
-      var url = "/qs/u/" + username + "/questions/" + q.id + "/answer";
+      var url = "/qs-api/u/" + username + "/questions/" + q.id + "/answer";
       var data = JSON.stringify({
           value: v * 0.01,
       });
