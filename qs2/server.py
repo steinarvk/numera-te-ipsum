@@ -61,8 +61,8 @@ def get_question(conn, user_id, sq_id):
   return {"question": qs2.qsjson.survey_question_json(q)}
 
 @user_page("questions/<int:sq_id>/skip", "POST")
-def skip_answer(conn, user_id, sq_id, data):
-  skip_question(conn, user_id, sq_id)
+def skip_question(conn, user_id, sq_id, data):
+  qs2.operations.skip_question(conn, user_id, sq_id)
   return {"question_skipped": sq_id}
 
 @user_page("questions/<int:sq_id>/answer", "POST")
