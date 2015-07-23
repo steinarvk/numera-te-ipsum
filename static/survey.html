@@ -136,7 +136,7 @@ $(function() {
           username: username,
           password: password,
       }).done(function(data) {
-          loadQuestion(data["questions"][0]);
+          loadQuestion(data["pending"][0]);
       });
   }
   function skipQuestion(q) {
