@@ -17,6 +17,7 @@ def setup_logging(level, filename=None):
   if filename:
     kwargs["filename"] = filename
   logging.basicConfig(**kwargs)
+  logging.info("began logging")
 
 @contextlib.contextmanager
 def section(name):

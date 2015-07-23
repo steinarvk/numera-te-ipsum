@@ -1,6 +1,7 @@
 from flask import Flask, request
 import flask
 import functools
+import logging
 
 import qs2.operations
 
@@ -19,8 +20,10 @@ def check_user(conn, login_id, username):
   try:
     user_id = qs2.operations.get_user_id(conn, username)
   except Exception as e:
+    logging.exception(e)
     raise AccessDenied()
   if user_id != login_id:
+    logging.info("user IDs do not match: %d != %d", user_id, login_id)
     raise AccessDenied()
 
 def user_page(app, engine, url, method):
@@ -37,6 +40,7 @@ def user_page(app, engine, url, method):
           try:
             kwargs["user_id"] = qs2.operations.get_user_id(conn, username)
           except Exception as e:
+            logging.exception(e)
             return forbidden()
           if method == "POST":
             kwargs["data"] = request.get_json()
