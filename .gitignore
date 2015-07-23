@@ -6,3 +6,4 @@ env/
 htmlcov/
 .activate
 dist/
+*.egg-info/
