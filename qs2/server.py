@@ -75,7 +75,7 @@ def post_answer(conn, user_id, sq_id, data):
   return {
     "answer_id": qs2.operations.post_answer(conn,
       user_id=user_id,
-      question_id=question_id,
+      question_id=sq_id,
       value=v,
     )
   }
