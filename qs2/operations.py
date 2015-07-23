@@ -199,6 +199,18 @@ def randomize_next_delay(mean_delay):
   k = 1 + symmetric_truncated_gauss(0.5, 1)
   return datetime.timedelta(seconds=k * mean_delay.total_seconds())
 
+def skip_question(conn, user_id, question_id):
+  now = datetime.datetime.now()
+  with conn.begin() as trans:
+    question = fetch_question(conn, user_id, question_id,
+      model.survey_questions.c.mean_delay,
+      model.survey_questions.c.next_trigger)
+    delay = randomize_next_delay(question["mean_delay"])
+    query = model.survey_questions.update().values(
+      next_trigger = now + delay,
+    ).where(model.survey_questions.c.sq_id == question_id)
+    sql_op(conn, "update next question trigger", query)
+
 def post_answer(conn, user_id, question_id, value, req_id_creator=None):
   now = datetime.datetime.now()
   qs2.validation.check("survey_value", value)

@@ -6,7 +6,8 @@ function addSlider(par, opts) {
       maxScale = opts.maxScale || 100,
       minScale = opts.minScale || 0,
       speedMul = opts.speedMultiplier || 1.0,
-      value, origin;
+      value = null,
+      origin;
 
   arenaElement.className = opts.arenaClass || "sliderBackground";
   labelElement.className = opts.labelClass || "sliderLabel";
@@ -15,6 +16,16 @@ function addSlider(par, opts) {
   par.append(arenaElement);
   $(arenaElement).append(labelElement);
   $(arenaElement).append(barElement);
+
+  function reset() {
+    value = null;
+    $(labelElement).html();
+    $(barElement).css("width", "0px");
+  }
+
+  function hasValue() {
+    return value !== null;
+  }
 
   function rounded(x) {
     return Math.round(x * (maxScale - minScale)) + minScale;
@@ -55,10 +66,9 @@ function addSlider(par, opts) {
     setValue(origin + speedMul * ev.deltaX / wid);
   });
 
-  setValue(0.5);
-
   return {
     getValue: getValue,
-    reset: function() { setValue(0.5); }
+    reset: function() { setValue(0.5); },
+    isSet: hasValue,
   };
 };

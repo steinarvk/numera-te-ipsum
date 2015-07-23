@@ -52,26 +52,40 @@ td,th {
 .sliderLabels {
   display: block;
   position: absolute;
-  top: 50%;
+  top: 60%;
   width: 100%;
-  height: 25%;
+  height: 10%;
+}
+#message {
+  position: absolute;
+  width: 100%;
+  top: 0;
+  height: 10%;
 }
 #questionText {
   position: absolute;
   width: 100%;
-  top: 0;
+  top: 10%;
   height: 25%;
 }
 #submitButton {
   position: absolute;
-  top: 25%;
+  top: 35%;
   height: 25%;
-  width: 100%;
+  width: 50%;
+  right: 0%;
+}
+#skipButton {
+  position: absolute;
+  top: 35%;
+  height: 25%;
+  width: 50%;
+  left: 0%;
 }
 .sliderBackground {
   position: absolute;
-  top: 75%;
-  height: 25%;
+  top: 70%;
+  height: 30%;
   width: 100%;
   text-size: 100%;
   background-color: #aaf;
@@ -98,6 +112,7 @@ td,th {
 <div class="choiceSlider"></div>
 <tr>
 <input type="button" value="Submit" id="submitButton">
+<input type="button" value="Skip" id="skipButton">
 </div>
 </form>
 <input type="button" value="Re-fetch" id="refetchButton" style="display: none;">
@@ -107,7 +122,11 @@ td,th {
 <script src="js/slider.js"></script>
 <script type="text/javascript" language="javascript">
 $(function() {
-  var slider = addSlider($(".choiceSlider"), {});
+  var slider = addSlider($(".choiceSlider"), {
+    onChange: function(val) {
+      $("#submitButton").prop("disabled", false);
+    },
+  });
   var currentQ;
   var username, password;
 
@@ -118,6 +137,19 @@ $(function() {
           password: password,
       }).done(function(data) {
           loadQuestion(data["questions"][0]);
+      });
+  }
+  function skipQuestion(q) {
+      var url = "/qs/u/" + username + "/questions/" + q.id + "/skip";
+      $.ajax(url, {
+          username: username,
+          password: password,
+          type: "POST",
+          contentType: "application/json; charset: utf-8",
+          dataType: "json",
+          data: {},
+      }).done(function() {
+          fetchQuestion();
       });
   }
   function postAnswer(q, v) {
@@ -146,6 +178,7 @@ $(function() {
     $("#surveyForm").show();
     $("#refetchButton").hide();
     slider.reset();
+    $("#submitButton").prop("disabled", true);
     currentQ = q;
   }
   $("#authButton").click(function() {
@@ -160,6 +193,10 @@ $(function() {
   });
   $("#submitButton").click(function() {
     postAnswer(currentQ, slider.getValue());
+    currentQ = null;
+  });
+  $("#skipButton").click(function() {
+    skipQuestion(currentQ);
     currentQ = null;
   });
 });
