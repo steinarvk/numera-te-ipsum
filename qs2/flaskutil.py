@@ -29,22 +29,22 @@ def user_page(app, engine, url, method):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
       username = kwargs["username"]
-      conn = engine.connect()
-      login_id = auth_user(conn) 
-      with conn.begin() as trans:
-        check_user(conn, login_id, username)
-        del kwargs["username"]
-        try:
-          kwargs["user_id"] = qs2.operations.get_user_id(conn, username)
-        except Exception as e:
-          return forbidden()
-        if method == "POST":
-          kwargs["data"] = request.get_json()
-        rv = f(conn=conn, *args, **kwargs)
-        if isinstance(rv, dict):
-          if "status" not in rv:
-            rv["status"] = "ok"
-          return flask.jsonify(**rv)
-        return rv
+      with engine.connect() as conn:
+        login_id = auth_user(conn)
+        with conn.begin() as trans:
+          check_user(conn, login_id, username)
+          del kwargs["username"]
+          try:
+            kwargs["user_id"] = qs2.operations.get_user_id(conn, username)
+          except Exception as e:
+            return forbidden()
+          if method == "POST":
+            kwargs["data"] = request.get_json()
+          rv = f(conn=conn, *args, **kwargs)
+          if isinstance(rv, dict):
+            if "status" not in rv:
+              rv["status"] = "ok"
+            return flask.jsonify(**rv)
+          return rv
   return wrap
 

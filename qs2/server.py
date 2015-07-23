@@ -30,11 +30,11 @@ def oops(message, code=404):
 
 @app.route("/u/", methods=["POST"])
 def register_new_user():
-  conn = engine.connect()
-  with conn.begin() as trans:
-    arg = request.get_json()
-    user_id = qs2.operations.add_user(conn, arg["username"], arg["password"])
-    return flask.jsonify(status="ok", user_id=user_id)
+  with engine.connect() as conn:
+    with conn.begin() as trans:
+      arg = request.get_json()
+      user_id = qs2.operations.add_user(conn, arg["username"], arg["password"])
+      return flask.jsonify(status="ok", user_id=user_id)
 
 @user_page("questions", "GET")
 def get_questions(conn, user_id):
