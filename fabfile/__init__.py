@@ -12,6 +12,7 @@ def restart():
 @task
 def pack():
   local("python setup.py sdist --formats=gztar", capture=False)
+  local("rm -rf QuantifiedSelfServer.egg-info/")
 
 @task
 def deploy_app():
