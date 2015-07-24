@@ -2,7 +2,9 @@ from __future__ import with_statement
 from alembic import context
 from logging.config import fileConfig
 import sqlalchemy
+import os
 import qs2.model
+import qs2.configutil
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -22,11 +24,13 @@ target_metadata = qs2.model.metadata
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
 
+qs2config = qs2.configutil.Config(
+  os.environ.get("QS_CONFIG_FILE",
+                 config.get_main_option("fallback_config_file")))
 db_credentials_file = config.get_main_option("db_credentials_file")
 
 def get_database_credentials_url():
-  with open(db_credentials_file) as f:
-    return f.readline()
+  return qs2config["database.url"]
 
 def run_migrations_offline():
     """Run migrations in 'offline' mode.

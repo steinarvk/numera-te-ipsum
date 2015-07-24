@@ -26,7 +26,6 @@ def deploy_app():
   with cd(deploydir):
     run("tar xvfz '{}'".format(deployfile))
     with cd(dist):
-      run("source '{}bin/activate'".format(envdir))
       run("{}bin/python setup.py install --force".format(envdir))
 
 @task
@@ -42,6 +41,22 @@ def deploy_static():
   run("rm -rf /var/www/qs/static.backup")
   run("mv /var/www/qs/static /var/www/qs/static.backup || true")
   run("mv /var/www/qs/static.new/static /var/www/qs/static")
+
+@task
+def upgrade_production_db():
+  run("rm -rf /tmp/quantifiedself.db-upgrade.generated")
+  run("mkdir -p /tmp/quantifiedself.db-upgrade.generated")
+  local("git archive master -o dist/quantifiedself-full-archive.tar.gz") 
+  put("dist/quantifiedself-full-archive.tar.gz",
+      "/tmp/quantifiedself.db-upgrade.generated/qs-archive.tar.gz")
+  with cd("/tmp/quantifiedself.db-upgrade.generated"):
+    run("tar xvfz qs-archive.tar.gz")
+    run("virtualenv env")
+    envdir = "/tmp/quantifiedself.db-upgrade.generated/env/"
+    run("{}bin/pip install pyyaml alembic".format(envdir)) # urgh! TODO
+    run("{}bin/python setup.py install".format(envdir))
+    run("PYTHONPATH=$PYTHONPATH:. QS_CONFIG_FILE=/var/www/qs/config.yaml {}bin/alembic upgrade head".format(envdir))
+
 
 @task
 def pushall():

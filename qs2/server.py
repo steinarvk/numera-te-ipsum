@@ -21,8 +21,8 @@ qs2.logutil.setup_logging(filename=config["logging.filename"],
 app = Flask("qs2")
 engine = sqlalchemy.create_engine(config["database.url"])
 
-def user_page(url, method):
-  return qs2.flaskutil.user_page(app, engine, url, method)
+def user_page(*args, **kwargs):
+  return qs2.flaskutil.user_page(app, engine, *args, **kwargs)
 
 @app.errorhandler(qs2.flaskutil.AccessDenied)
 def forbidden(*args, **kwargs):
@@ -51,10 +51,11 @@ def get_questions(conn, user_id):
                      qs2.operations.get_all_questions(conn, user_id)),
   }
 
-@user_page("questions", "POST")
-def post_new_question(conn, user_id, data):
+@user_page("questions", "POST", write=True)
+def post_new_question(conn, user_id, data, req_id):
   return {
     "question_id": qs2.operations.add_question(conn, user_id,
+      req_id_creator=req_id,
       question=data["question"],
       low_label=data["low"],
       high_label=data["high"],
@@ -68,13 +69,13 @@ def get_question(conn, user_id, sq_id):
     return oops("no such question")
   return {"question": qs2.qsjson.survey_question_json(q)}
 
-@user_page("questions/<int:sq_id>/skip", "POST")
-def skip_question(conn, user_id, sq_id, data):
+@user_page("questions/<int:sq_id>/skip", "POST", write=True)
+def skip_question(conn, user_id, sq_id, data, req_id):
   qs2.operations.skip_question(conn, user_id, sq_id)
   return {"question_skipped": sq_id}
 
-@user_page("questions/<int:sq_id>/answer", "POST")
-def post_answer(conn, user_id, sq_id, data):
+@user_page("questions/<int:sq_id>/answer", "POST", write=True)
+def post_answer(conn, user_id, sq_id, data, req_id):
   q = qs2.operations.fetch_question(conn, user_id, sq_id)
   if not q:
     return oops("question not found")
@@ -82,6 +83,7 @@ def post_answer(conn, user_id, sq_id, data):
     lambda n: decimal.Decimal(str(n)), data["value"])
   return {
     "answer_id": qs2.operations.post_answer(conn,
+      req_id_creator=req_id,
       user_id=user_id,
       question_id=sq_id,
       value=v,

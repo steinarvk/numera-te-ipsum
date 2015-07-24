@@ -211,6 +211,19 @@ def skip_question(conn, user_id, question_id):
     ).where(model.survey_questions.c.sq_id == question_id)
     sql_op(conn, "update next question trigger", query)
 
+def log_request(conn, url, referer, user_agent, method, client_ip):
+  now = datetime.datetime.now()
+  query = model.requests.insert().values(
+    timestamp=now,
+    client_ip=client_ip,
+    url=url,
+    referer=referer,
+    user_agent=user_agent,
+    method=method,
+  )
+  (req_id,) = sql_op(conn, "log request", query).inserted_primary_key
+  return req_id
+
 def post_answer(conn, user_id, question_id, value, req_id_creator=None):
   now = datetime.datetime.now()
   qs2.validation.check("survey_value", value)

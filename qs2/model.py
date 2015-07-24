@@ -14,6 +14,7 @@ requests = Table("requests", metadata,
   Column("url", String),
   Column("referer", String),
   Column("user_agent", String),
+  Column("method", String),
 )
 
 users = Table("users", metadata,
