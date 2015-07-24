@@ -36,6 +36,7 @@ survey_questions = Table("survey_questions", metadata,
   Column("high_label", String),
   Column("middle_label", String),
   Column("active", Boolean, nullable=False),
+  Column("min_delay", Interval),
   Column("mean_delay", Interval, nullable=False),
   Column("next_trigger", DateTime, index=True),
 )
