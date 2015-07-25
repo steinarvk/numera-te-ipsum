@@ -135,6 +135,9 @@ $(function() {
       $.ajax(url, {
           username: username,
           password: password,
+          data: {
+            limit: 1,
+          },
       }).done(function(data) {
           loadQuestion(data["pending"][0]);
       });
