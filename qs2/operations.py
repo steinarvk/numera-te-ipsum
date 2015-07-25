@@ -25,6 +25,7 @@ class DbFetch(object):
 
 def sql_op(conn, name, query):
   with qs2.logutil.lowlevel_section("SQL operation ({})".format(name)):
+    logging.debug("Executing SQL query: %s", str(query))
     try:
       result = conn.execute(query)
     except sqlalchemy.exc.SQLAlchemyError as e:
