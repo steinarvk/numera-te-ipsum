@@ -171,7 +171,7 @@ def get_pending_questions(conn, user_id, columns=[], force=False, limit=None):
   condition = (
     (model.survey_questions.c.user_id_owner == user_id) &
     (model.survey_questions.c.active) &
-    ((model.survey_questions.c.never_trigger_before != None) |
+    ((model.survey_questions.c.never_trigger_before == None) |
      (model.survey_questions.c.never_trigger_before < now))
   )
   if not force:
