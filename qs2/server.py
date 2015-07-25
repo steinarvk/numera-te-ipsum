@@ -92,9 +92,12 @@ def post_answer(conn, user_id, sq_id, data, req_id):
 
 @user_page("questions/pending", "GET")
 def get_pending(conn, user_id):
+  force = request.args.get("force", type=qs2.flaskutil.parse_bool)
+  limit = request.args.get("limit", type=int)
+  questions = qs2.operations.get_pending_questions(
+    conn, user_id, force=force, limit=limit)
   return {
-    "pending": map(qs2.qsjson.survey_question_json,
-                   qs2.operations.get_pending_questions(conn, user_id))
+    "pending": map(qs2.qsjson.survey_question_json, questions),
   }
 
 if __name__ == '__main__':

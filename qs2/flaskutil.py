@@ -64,3 +64,10 @@ def user_page(app, engine, url, method, write=False):
           return rv
   return wrap
 
+def parse_bool(s):
+  if s.lower() in ("false", "no", "0", "f"):
+    return False
+  if s.lower() in ("true", "yes", "1", "t"):
+    return True
+  raise ValueError("invalid bool value '{}'".format(s))
+

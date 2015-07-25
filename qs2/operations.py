@@ -16,6 +16,13 @@ from sqlalchemy import sql
 
 from qs2.error import OperationFailed
 
+class DbFetch(object):
+  def __init__(self, conn, columns=[], **kwargs):
+    self.conn = conn
+    self.columns = columns
+    self.option = kwargs
+
+
 def sql_op(conn, name, query):
   with qs2.logutil.lowlevel_section("SQL operation ({})".format(name)):
     try:
@@ -111,6 +118,7 @@ def add_question(conn, user_id, question, low_label, high_label,
                  middle_label=None,
                  req_id_creator=None,
                  active=True,
+                 min_delay_s=300,
                  delay_s=3600):
   qs2.validation.check("question", question, secret=True)
   qs2.validation.check("label", low_label, secret=True)
@@ -126,6 +134,7 @@ def add_question(conn, user_id, question, low_label, high_label,
     high_label=high_label,
     middle_label=middle_label,
     active=active,
+    min_delay=datetime.timedelta(seconds=min_delay_s),
     mean_delay=datetime.timedelta(seconds=delay_s),
     next_trigger=now,
     req_id_creator=req_id_creator,
@@ -154,15 +163,22 @@ def get_all_questions(conn, user_id, *columns):
   ).order_by(model.survey_questions.c.timestamp.asc())
   return map(dict, sql_op(conn, "fetch questions", query).fetchall())
 
-def get_pending_questions(conn, user_id, *columns):
+def get_pending_questions(conn, user_id, columns=[], force=False, limit=None):
   if not columns:
     columns = [model.survey_questions]
   now = datetime.datetime.now()
-  query = sql.select(columns).where(
+  condition = (
     (model.survey_questions.c.user_id_owner == user_id) &
     (model.survey_questions.c.active) &
-    (model.survey_questions.c.next_trigger < now)
-  ).order_by(model.survey_questions.c.next_trigger.asc())
+    ((model.survey_questions.c.never_trigger_before != None) |
+     (model.survey_questions.c.never_trigger_before < now))
+  )
+  if not force:
+    condition = condition & (model.survey_questions.c.next_trigger < now)
+  query = sql.select(columns).where(condition)
+  query = query.order_by(model.survey_questions.c.next_trigger.asc())
+  if limit:
+    query = query.limit(limit)
   return map(dict, sql_op(conn, "fetch pending questions", query).fetchall())
 
 
@@ -229,9 +245,14 @@ def post_answer(conn, user_id, question_id, value, req_id_creator=None):
   qs2.validation.check("survey_value", value)
   with conn.begin() as trans:
     question = fetch_question(conn, user_id, question_id,
+      model.survey_questions.c.min_delay,
       model.survey_questions.c.mean_delay,
       model.survey_questions.c.next_trigger)
     delay = randomize_next_delay(question["mean_delay"])
+    if question["min_delay"]:
+      min_delay = randomize_next_delay(question["min_delay"])
+    else:
+      min_delay = None
     logging.info("delaying for %s", delay)
     query = model.survey_answers.insert().values(
       timestamp=now,
@@ -243,6 +264,7 @@ def post_answer(conn, user_id, question_id, value, req_id_creator=None):
     (answer_id,) = sql_op(conn, "create answer", query).inserted_primary_key
     query = model.survey_questions.update().values(
       next_trigger = now + delay,
+      never_trigger_before = (now + min_delay) if min_delay else None,
     ).where(model.survey_questions.c.sq_id == question_id)
     sql_op(conn, "update next question trigger", query)
     return answer_id
