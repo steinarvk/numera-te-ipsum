@@ -38,6 +38,7 @@ survey_questions = Table("survey_questions", metadata,
   Column("active", Boolean, nullable=False),
   Column("min_delay", Interval),
   Column("mean_delay", Interval, nullable=False),
+  Column("never_trigger_before", DateTime),
   Column("next_trigger", DateTime, index=True),
 )
 
