@@ -121,6 +121,8 @@ td,th {
 <script src="lib/hammer.min.js"></script>
 <script src="js/slider.js"></script>
 <script type="text/javascript" language="javascript">
+var forcePending = false;
+
 $(function() {
   var slider = addSlider($(".choiceSlider"), {
     onChange: function(val) {
@@ -137,6 +139,7 @@ $(function() {
           password: password,
           data: {
             limit: 1,
+            force: forcePending,
           },
       }).done(function(data) {
           loadQuestion(data["pending"][0]);
