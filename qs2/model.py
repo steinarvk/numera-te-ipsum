@@ -51,3 +51,24 @@ survey_answers = Table("survey_answers", metadata,
   Column("timestamp", DateTime, nullable=False, index=True),
   Column("value", Numeric, nullable=False),
 )
+
+event_types = Table("event_types", metadata,
+  Column("evt_id", Integer, primary_key=True),
+  Column("req_id_creator", Integer, ForeignKey("requests.req_id")),
+  Column("user_id_owner", Integer, ForeignKey("users.user_id")),
+  Column("name", String, nullable=False),
+  Column("use_duration", Boolean, nullable=False),
+  Column("mean_inactive_delay", Interval, nullable=False),
+  Column("next_trigger", DateTime, index=True),
+)
+
+event_record = Table("event_record", metadata,
+  Column("evr_id", Integer, primary_key=True),
+  Column("req_id_creator", Integer, ForeignKey("requests.req_id")),
+  Column("user_id_owner", Integer, ForeignKey("users.user_id")),
+  Column("evt_id", Integer, ForeignKey("event_types.evt_id")),
+  Column("status", Enum("on", "off", "unknown", "unreported"),
+    nullable=False, index=True),
+  Column("start", DateTime, nullable=False, index=True),
+  Column("end", DateTime, nullable=False, index=True),
+)
