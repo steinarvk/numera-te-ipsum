@@ -15,6 +15,7 @@ def survey_question_json(q):
       "middle": q["middle_label"],
       "high": q["high_label"],
     },
+    "trigger": json_datetime(q["next_trigger"]),
     "timestamp": json_datetime(q["timestamp"]),
     "interval": json_duration(q["mean_delay"]),
   }

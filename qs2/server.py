@@ -15,6 +15,7 @@ import qs2.configutil
 import logging
 import os
 import qs2.parsing
+import operator
 
 config = qs2.configutil.Config(os.environ["QS_CONFIG_FILE"])
 qs2.logutil.setup_logging(filename=config["logging.filename"],
@@ -98,10 +99,19 @@ def post_answer(conn, user_id, sq_id, data, req_id):
 def get_pending(conn, user_id):
   force = request.args.get("force", type=qs2.flaskutil.parse_bool)
   limit = request.args.get("limit", type=int)
+  filter_types = request.args.get("types", type=qs2.flaskutil.set_parser())
+  def accept(t):
+    return filter_types is None or t in filter_types
   questions = qs2.operations.get_pending_questions(
     conn, user_id, force=force, limit=limit)
+  pending = []
+  if accept("question"):
+    pending.extend(map(qs2.qsjson.survey_question_json, questions))
+  pending.sort(key=operator.itemgetter("trigger"))
+  if limit:
+    pending = pending[:limit]
   return {
-    "pending": map(qs2.qsjson.survey_question_json, questions),
+    "pending": pending,
   }
 
 if __name__ == '__main__':

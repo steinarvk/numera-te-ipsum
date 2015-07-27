@@ -71,3 +71,13 @@ def parse_bool(s):
     return True
   raise ValueError("invalid bool value '{}'".format(s))
 
+def list_parser(subparser=str):
+  def f(s):
+    return [subparser(x) for x in s.split(",")]
+  return f
+
+def set_parser(subparser=str):
+  f = list_parser(subparser)
+  def g(s):
+    return set(f(s))
+  return g

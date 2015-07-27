@@ -140,6 +140,7 @@ $(function() {
           data: {
             limit: 1,
             force: forcePending,
+            types: "question",
           },
       }).done(function(data) {
           loadQuestion(data["pending"][0]);
