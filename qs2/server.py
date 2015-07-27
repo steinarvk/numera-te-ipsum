@@ -14,6 +14,7 @@ import qs2.logutil
 import qs2.configutil
 import logging
 import os
+import qs2.parsing
 
 config = qs2.configutil.Config(os.environ["QS_CONFIG_FILE"])
 qs2.logutil.setup_logging(filename=config["logging.filename"],
@@ -53,12 +54,15 @@ def get_questions(conn, user_id):
 
 @user_page("questions", "POST", write=True)
 def post_new_question(conn, user_id, data, req_id):
+  delay_s = qs2.validation.parse_as("duration_seconds",
+    qs2.parsing.parse_duration, data.get("delay", default="1h"))
   return {
     "question_id": qs2.operations.add_question(conn, user_id,
       req_id_creator=req_id,
       question=data["question"],
       low_label=data["low"],
       high_label=data["high"],
+      delay_s=delay_s,
     )
   }
 

@@ -59,6 +59,7 @@ def number_invalidator(min_, max_):
 Invalidators = {
   "username": users.invalidate_username,
   "password": users.invalidate_password,
+  "duration_seconds": number_invalidator(0, float("inf")),
   "question": lambda s: invalidate_length(s, (1, 1024)),
   "label": lambda s: invalidate_length(s, (1, 128)),
   "survey_value": number_invalidator(0, 1),
