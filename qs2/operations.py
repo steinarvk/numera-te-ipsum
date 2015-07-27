@@ -214,7 +214,9 @@ def symmetric_truncated_gauss(sigma, clip):
 
 def randomize_next_delay(mean_delay):
   k = 1 + symmetric_truncated_gauss(0.5, 1)
-  return datetime.timedelta(seconds=k * mean_delay.total_seconds())
+  result = datetime.timedelta(seconds=k * mean_delay.total_seconds())
+  logging.debug("randomizing %s with factor %lf: %s", mean_delay, k, result)
+  return result
 
 def skip_question(conn, user_id, question_id):
   now = datetime.datetime.now()
