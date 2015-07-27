@@ -55,7 +55,7 @@ def get_questions(conn, user_id):
 @user_page("questions", "POST", write=True)
 def post_new_question(conn, user_id, data, req_id):
   delay_s = qs2.validation.parse_as("duration_seconds",
-    qs2.parsing.parse_duration, data.get("delay", default="1h"))
+    qs2.parsing.parse_duration, data.get("delay", "1h"))
   return {
     "question_id": qs2.operations.add_question(conn, user_id,
       req_id_creator=req_id,
