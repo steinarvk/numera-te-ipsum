@@ -133,17 +133,34 @@ $(function() {
   var username, password;
 
   function fetchQuestion() {
-      var url = "/qs-api/u/" + username + "/questions/pending"; 
+      var url = "/qs-api/u/" + username + "/questions/pending",
+          hardLimit = 20;
+      $("#refetchButton").show();
       $.ajax(url, {
           username: username,
           password: password,
           data: {
-            limit: 1,
+            limit: hardLimit,
             force: forcePending,
             types: "question",
           },
       }).done(function(data) {
-          loadQuestion(data["pending"][0]);
+          var n = data["pending"].length,
+              msg;
+          if (n > 0) {
+            loadQuestion(data["pending"][0]);
+            $("#refetchButton").hide();
+            if (n == 1) {
+              msg = "1 item pending";
+            } else if (n >= hardLimit) {
+              msg = "" + hardLimit + " or more items pending";
+            } else {
+              msg = "" + n + " items pending";
+            }
+          } else {
+            msg = "No items pending";
+          }
+          $("#message").html(msg);
       });
   }
   function skipQuestion(q) {
