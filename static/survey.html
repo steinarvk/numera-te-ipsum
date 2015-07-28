@@ -131,6 +131,28 @@ $(function() {
   });
   var currentQ;
   var username, password;
+  var t0;
+  var statusbar = {};
+
+  function setStatus(key, val) {
+    var msgs = [];
+
+    statusbar[key] = val;
+
+    if (statusbar.queueSizeMessage !== undefined) {
+      msgs.push(statusbar.queueSizeMessage);
+    }
+
+    if (statusbar.answerTimeMs !== undefined) {
+      msgs.push("Last answer time: " + statusbar.answerTimeMs + "ms");
+    }
+
+    if (statusbar.answer !== undefined) {
+      msgs.push("Last answer: " + statusbar.answer + "%");
+    }
+
+    $("#message").html(msgs.join(", "));
+  }
 
   function fetchQuestion() {
       var url = "/qs-api/u/" + username + "/questions/pending",
@@ -160,7 +182,8 @@ $(function() {
           } else {
             msg = "No items pending";
           }
-          $("#message").html(msg);
+          setStatus("queueSizeMessage", msg);
+          t0 = new Date().getTime();
       });
   }
   function skipQuestion(q) {
@@ -175,10 +198,13 @@ $(function() {
   }
   function postAnswer(q, v) {
       var url = "/qs-api/u/" + username + "/questions/" + q.id + "/answer";
+      var t1 = new Date().getTime(),
+          latency = t1 - t0;
       var data = JSON.stringify({
           value: v * 0.01,
       });
-      $("#message").html(data);
+      setStatus("answer", v);
+      setStatus("answerTimeMs", latency);
       $("#surveyForm").hide();
       $.ajax(url, {
           username: username,
