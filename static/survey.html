@@ -202,6 +202,7 @@ $(function() {
           latency = t1 - t0;
       var data = JSON.stringify({
           value: v * 0.01,
+          latency_ms: latency,
       });
       setStatus("answer", v);
       setStatus("answerTimeMs", latency);

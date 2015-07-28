@@ -16,6 +16,7 @@ import logging
 import os
 import qs2.parsing
 import operator
+import datetime
 
 config = qs2.configutil.Config(os.environ["QS_CONFIG_FILE"])
 qs2.logutil.setup_logging(filename=config["logging.filename"],
@@ -86,12 +87,16 @@ def post_answer(conn, user_id, sq_id, data, req_id):
     return oops("question not found")
   v = qs2.validation.parse_as("survey_value",
     lambda n: decimal.Decimal(str(n)), data["value"])
+  latency = None
+  if "latency_ms" in data:
+    latency = datetime.timedelta(milliseconds=int(data["latency_ms"]))
   return {
     "answer_id": qs2.operations.post_answer(conn,
       req_id_creator=req_id,
       user_id=user_id,
       question_id=sq_id,
       value=v,
+      answer_latency=latency,
     )
   }
 

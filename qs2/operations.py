@@ -243,7 +243,9 @@ def log_request(conn, url, referer, user_agent, method, client_ip):
   (req_id,) = sql_op(conn, "log request", query).inserted_primary_key
   return req_id
 
-def post_answer(conn, user_id, question_id, value, req_id_creator=None):
+def post_answer(conn, user_id, question_id, value,
+                answer_latency=None,
+                req_id_creator=None):
   now = datetime.datetime.now()
   qs2.validation.check("survey_value", value)
   with conn.begin() as trans:
@@ -263,6 +265,7 @@ def post_answer(conn, user_id, question_id, value, req_id_creator=None):
       sq_id=question_id,
       value=value,
       req_id_creator=req_id_creator,
+      answer_latency=answer_latency,
     )
     (answer_id,) = sql_op(conn, "create answer", query).inserted_primary_key
     query = model.survey_questions.update().values(

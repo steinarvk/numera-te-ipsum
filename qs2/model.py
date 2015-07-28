@@ -50,6 +50,7 @@ survey_answers = Table("survey_answers", metadata,
     nullable=False),
   Column("timestamp", DateTime, nullable=False, index=True),
   Column("value", Numeric, nullable=False),
+  Column("answer_latency", Interval, nullable=True),
 )
 
 event_types = Table("event_types", metadata,
