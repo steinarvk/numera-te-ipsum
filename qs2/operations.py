@@ -168,19 +168,31 @@ def get_pending_questions(conn, user_id, columns=[], force=False, limit=None):
   if not columns:
     columns = [model.survey_questions]
   now = datetime.datetime.now()
-  condition = (
+  condition = base_condition = (
     (model.survey_questions.c.user_id_owner == user_id) &
     (model.survey_questions.c.active) &
     ((model.survey_questions.c.never_trigger_before == None) |
      (model.survey_questions.c.never_trigger_before < now))
   )
   if not force:
-    condition = condition & (model.survey_questions.c.next_trigger < now)
+    condition = base_condition & (model.survey_questions.c.next_trigger < now)
   query = sql.select(columns).where(condition)
   query = query.order_by(model.survey_questions.c.next_trigger.asc())
   if limit:
     query = query.limit(limit)
-  return map(dict, sql_op(conn, "fetch pending questions", query).fetchall())
+  data = map(dict, sql_op(conn, "fetch pending questions", query).fetchall())
+  count_query = sql.select([sql.func.count()]).select_from(model.survey_questions).where(condition)
+  count = sql_op(conn, "fetch query count", count_query).scalar()
+  logging.info("fetched count %d", count)
+  first_trigger_query = sql.select([model.survey_questions.c.next_trigger]).where(
+    base_condition).order_by(model.survey_questions.c.next_trigger.asc()).limit(1)
+  first_trigger = sql_op(conn, "fetch next trigger", first_trigger_query).scalar()
+  logging.info("fetched trigger %s", repr(first_trigger))
+  return {
+    "results": data,
+    "count": count,
+    "first_trigger": first_trigger,
+  }
 
 
 def peek_question(conn, user_id):

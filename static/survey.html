@@ -127,6 +127,7 @@ td,th {
 </body>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script> 
 <script src="lib/hammer.min.js"></script>
+<script src="lib/moment.js"></script>
 <script src="js/slider.js"></script>
 <script type="text/javascript" language="javascript">
 var forcePending = false;
@@ -163,30 +164,37 @@ $(function() {
   }
 
   function fetchQuestion() {
-      var url = "/qs-api/u/" + username + "/questions/pending",
-          hardLimit = 20;
+      var url = "/qs-api/u/" + username + "/questions/pending";
       $("#refetchButton").show();
       $.ajax(url, {
           username: username,
           password: password,
           data: {
-            limit: hardLimit,
+            limit: 1,
             force: forcePending,
             types: "question",
           },
       }).done(function(data) {
-          var n = data["pending"].length,
+          var n = data.queue_size,
+              now = new Date().getTime() / 1000.0,
+              first_in = data.first_trigger - now,
               msg;
           if (n > 0) {
             loadQuestion(data["pending"][0]);
             $("#refetchButton").hide();
             if (n == 1) {
               msg = "1 item pending";
-            } else if (n >= hardLimit) {
-              msg = "" + hardLimit + " or more items pending";
             } else {
               msg = "" + n + " items pending";
             }
+          } else if (first_in && first_in > 0) {
+            msg = "No items pending (next in ";
+            if (first_in < 60) {
+              msg += Math.round(first_in) + "s";
+            } else {
+              msg += moment().add(first_in, "seconds").fromNow();
+            }
+            msg += ")";
           } else {
             msg = "No items pending";
           }

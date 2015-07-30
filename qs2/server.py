@@ -107,17 +107,22 @@ def get_pending(conn, user_id):
   filter_types = request.args.get("types", type=qs2.flaskutil.set_parser())
   def accept(t):
     return filter_types is None or t in filter_types
-  questions = qs2.operations.get_pending_questions(
+  results = qs2.operations.get_pending_questions(
     conn, user_id, force=force, limit=limit)
+  questions = results["results"]
   pending = []
   if accept("question"):
     pending.extend(map(qs2.qsjson.survey_question_json, questions))
   pending.sort(key=operator.itemgetter("trigger"))
   if limit:
     pending = pending[:limit]
-  return {
+  rv = {
     "pending": pending,
+    "queue_size": results["count"],
   }
+  if results.get("first_trigger"):
+    rv["first_trigger"] = qs2.qsjson.json_datetime(results["first_trigger"])
+  return rv
 
 if __name__ == '__main__':
   app.run(debug=True)
