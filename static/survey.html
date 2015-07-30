@@ -188,9 +188,9 @@ $(function() {
               msg = "" + n + " items pending";
             }
           } else if (first_in && first_in > 0) {
-            msg = "No items pending (next in ";
+            msg = "No items pending (next ";
             if (first_in < 60) {
-              msg += Math.round(first_in) + "s";
+              msg += "in " + Math.round(first_in) + " seconds";
             } else {
               msg += moment().add(first_in, "seconds").fromNow();
             }
