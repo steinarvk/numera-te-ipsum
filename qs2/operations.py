@@ -9,8 +9,10 @@ import time
 import qs2.logutil
 import sqlalchemy
 import random
+import csv
 
 from qs2 import ui
+import qs2.csvexport
 
 from sqlalchemy import sql
 
@@ -210,6 +212,34 @@ def fetch_question(conn, user_id, question_id, *columns):
   row = sql_op(conn, "fetch question by ID", query).fetchone()
   if row:
     return dict(row)
+
+def fetch_csv_export(conn, user_id, querystring, out):
+  terms = qs2.csvexport.parse_csv_query(querystring)
+  rawstreams = [map(lambda row: (qs2.qsjson.json_datetime(row.timestamp),
+                                 row.value),
+                    fetch_var(conn, user_id, term.var_type, term.var_id))
+                for term in terms]
+  streams = [qs2.csvexport.DataStream(stream) for stream in rawstreams]
+  tabulated = qs2.csvexport.interpolate_streams(streams)
+  writer = csv.writer(out)
+  for row in tabulated:
+    writer.writerow(row)
+
+def fetch_var(conn, user_id, var_type, var_id):
+  if var_type != "question":
+    raise OperationFailed("unsupported var_type '{}'".format(var_type))
+  return fetch_question_answers(conn, user_id, var_id)
+
+def fetch_question_answers(conn, user_id, question_id):
+  query = sql.select([
+    model.survey_answers.c.timestamp, 
+    model.survey_answers.c.value,
+  ]).where(
+    (model.survey_answers.c.user_id_owner == user_id) &
+    (model.survey_answers.c.sq_id == question_id)
+  ).order_by(model.survey_answers.c.timestamp.asc())
+  rows = sql_op(conn, "fetch question answers", query).fetchall()
+  return rows
 
 def peek_question_interactive(conn, username, skip_auth=False):
   user_id = maybe_auth(conn, username, skip_auth)

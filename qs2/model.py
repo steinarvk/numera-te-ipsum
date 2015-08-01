@@ -1,7 +1,7 @@
 from sqlalchemy import (
   Table, Column, MetaData, ForeignKey,
   UniqueConstraint,
-  Integer, String, ForeignKey, DateTime, Numeric, Interval, Boolean, Enum,
+  Integer, String, DateTime, Numeric, Interval, Boolean, Enum,
 )
 
 metadata = MetaData()

@@ -3,6 +3,7 @@ import flask
 
 import functools
 import decimal
+import StringIO
 
 import sqlalchemy
 import qs2.operations
@@ -67,6 +68,13 @@ def post_new_question(conn, user_id, data, req_id):
       delay_s=delay_s,
     )
   }
+
+@user_page("export/csv/<query>", "GET")
+def export_csv(conn, user_id, query):
+  stream = StringIO.StringIO()
+  qs2.operations.fetch_csv_export(conn, user_id, query, stream)
+  csv_data = stream.getvalue()
+  return flask.Response(csv_data, 200, mimetype="text/csv")
 
 @user_page("questions/<int:sq_id>", "GET")
 def get_question(conn, user_id, sq_id):
