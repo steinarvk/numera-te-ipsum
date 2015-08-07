@@ -30,6 +30,7 @@ survey_questions = Table("survey_questions", metadata,
   Column("sq_id", Integer, primary_key=True),
   Column("req_id_creator", Integer, ForeignKey("requests.req_id")),
   Column("user_id_owner", Integer, ForeignKey("users.user_id")),
+  Column("trigger_id", Integer, ForeignKey("triggers.trigger_id")),
   Column("question", String, nullable=False),
   Column("timestamp", DateTime),
   Column("low_label", String),
@@ -51,6 +52,19 @@ survey_answers = Table("survey_answers", metadata,
   Column("timestamp", DateTime, nullable=False, index=True),
   Column("value", Numeric, nullable=False),
   Column("answer_latency", Interval, nullable=True),
+)
+
+query_type = Enum("question", "event",
+  name="query_type")
+
+triggers = Table("triggers", metadata,
+  Column("trigger_id", Integer, primary_key=True),
+  Column("type", query_type, nullable=False),
+  Column("active", Boolean, nullable=False),
+  Column("min_delay", Interval),
+  Column("mean_delay", Interval, nullable=False),
+  Column("never_trigger_before", DateTime),
+  Column("next_trigger", DateTime, index=True),
 )
 
 event_types = Table("event_types", metadata,
