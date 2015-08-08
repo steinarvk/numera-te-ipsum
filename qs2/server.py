@@ -66,7 +66,9 @@ def post_new_question(conn, user_id, data, req_id):
       question=data["question"],
       low_label=data["low"],
       high_label=data["high"],
-      delay_s=delay_s,
+      trigger_spec={
+        "delay_s": delay_s,
+      },
     )
   }
 

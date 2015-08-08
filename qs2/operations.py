@@ -117,34 +117,49 @@ def cli_query_form(*fields):
     print "{}: '{}'".format(field_name, rv[field_key])
   return rv
 
+def create_trigger(conn, user_id, trigger_type, spec):
+  spec = spec or {}
+  active = spec.get("active", True)
+  mean_delay = datetime.timedelta(seconds=spec.get("delay_s", 3600))
+  min_delay = datetime.timedelta(seconds=spec.get("min_delay_s", 300))
+  now = datetime.datetime.now()
+  query = model.triggers.insert().values(
+    type=trigger_type,
+    user_id_owner=user_id,
+    active=active,
+    min_delay=min_delay,
+    mean_delay=mean_delay,
+    never_trigger_before=now,
+    next_trigger=now,
+  )
+  (trigger_id,) = sql_op(conn, "create new trigger", query).inserted_primary_key
+  return trigger_id
+
 def add_question(conn, user_id, question, low_label, high_label,
                  middle_label=None,
                  req_id_creator=None,
-                 active=True,
-                 min_delay_s=300,
-                 delay_s=3600):
+                 trigger_spec=None):
   qs2.validation.check("question", question, secret=True)
   qs2.validation.check("label", low_label, secret=True)
   qs2.validation.check("label", high_label, secret=True)
   if middle_label:
     qs2.validation.check("label", middle_label, secret=True)
-  now = datetime.datetime.now()
-  query = model.survey_questions.insert().values(
-    timestamp=now,
-    user_id_owner=user_id,
-    question=question,
-    low_label=low_label,
-    high_label=high_label,
-    middle_label=middle_label,
-    active=active,
-    min_delay=datetime.timedelta(seconds=min_delay_s),
-    mean_delay=datetime.timedelta(seconds=delay_s),
-    next_trigger=now,
-    req_id_creator=req_id_creator,
-  )
-  (sq_id,) = sql_op(conn, "create question", query).inserted_primary_key
-  logging.info("created question #%d", sq_id)
-  return sq_id
+  with conn.begin() as trans:
+    trigger_id = create_trigger(conn, user_id, "question", trigger_spec)
+    now = datetime.datetime.now()
+    query = model.survey_questions.insert().values(
+      timestamp=now,
+      user_id_owner=user_id,
+      question=question,
+      low_label=low_label,
+      high_label=high_label,
+      middle_label=middle_label,
+      trigger_id=trigger_id,
+      req_id_creator=req_id_creator,
+    )
+    (sq_id,) = sql_op(conn, "create question", query).inserted_primary_key
+    logging.info("created question #%d", sq_id)
+    return sq_id
   
 def maybe_auth(conn, username, skip_auth):
   if skip_auth:
