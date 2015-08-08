@@ -40,6 +40,9 @@ function addSlider(par, opts) {
   }
 
   function setValue(v) {
+    if (isNaN(v)) {
+      return;
+    }
     var wid = $(arenaElement).width();
     if (v < 0) {
       v = 0;
@@ -56,7 +59,9 @@ function addSlider(par, opts) {
   }
 
   $(arenaElement).on("mousedown vmousedown", function(ev) {
-    setValue(ev.offsetX / $(arenaElement).width());
+    var targetOffset = $(ev.target).offset(),
+        offset = ev.pageX - targetOffset.left;
+    setValue(offset / $(arenaElement).width());
   });
   hammer.on("panstart", function(ev) {
     origin = value;
