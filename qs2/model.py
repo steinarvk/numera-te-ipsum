@@ -70,6 +70,7 @@ event_types = Table("event_types", metadata,
   Column("trigger_id", Integer, ForeignKey("triggers.trigger_id")),
   Column("name", String, nullable=False),
   Column("use_duration", Boolean, nullable=False),
+  Column("timestamp", DateTime),
 )
 
 event_record = Table("event_record", metadata,
