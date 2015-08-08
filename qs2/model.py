@@ -67,10 +67,9 @@ event_types = Table("event_types", metadata,
   Column("evt_id", Integer, primary_key=True),
   Column("req_id_creator", Integer, ForeignKey("requests.req_id")),
   Column("user_id_owner", Integer, ForeignKey("users.user_id")),
+  Column("trigger_id", Integer, ForeignKey("triggers.trigger_id")),
   Column("name", String, nullable=False),
   Column("use_duration", Boolean, nullable=False),
-  Column("mean_inactive_delay", Interval, nullable=False),
-  Column("next_trigger", DateTime, index=True),
 )
 
 event_record = Table("event_record", metadata,
