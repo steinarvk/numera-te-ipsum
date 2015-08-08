@@ -399,3 +399,23 @@ def survey_interactive(conn, username, accept_stale=False):
                                ui.UI.raw_input, logging.error)
     now = datetime.datetime.now()
     post_answer(conn, user_id, q["sq_id"], value)
+
+def add_event_type(conn, user_id, name,
+                   use_duration, trigger_spec, req_id_creator):
+  qs2.validation.check("question", name, secret=True)
+  qs2.validation.check("bool", use_duration)
+  qs2.validation.check("trigger_spec", trigger_spec)
+  now = datetime.datetime.now()
+  with conn.begin() as trans:
+    trigger_id = create_trigger(conn, user_id, "event", trigger_spec)
+    query = qs2.model.event_types.insert().values(
+      timestamp=now,
+      req_id_creator=req_id_creator,
+      user_id_owner=user_id,
+      name=name,
+      use_duration=use_duration,
+      trigger_id=trigger_id,
+    )
+    (evt_id,) = sql_op(conn, "create event type", query).inserted_primary_key
+    logging.info("created event #%d", evt_id)
+    return evt_id

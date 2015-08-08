@@ -56,6 +56,16 @@ def get_questions(conn, user_id):
                      qs2.operations.get_all_questions(conn, user_id)),
   }
 
+@user_page("events", "POST", write=True)
+def post_new_event_type(conn, user_id, data, req_id):
+  event_type_id = qs2.operations.add_event_type(conn, user_id,
+    name=data["name"],
+    req_id_creator=req_id,
+    use_duration=data["use_duration"],
+    trigger_spec=data["trigger"],
+  )
+  return {"event_type_id": event_type_id}
+
 @user_page("questions", "POST", write=True)
 def post_new_question(conn, user_id, data, req_id):
   delay_s = qs2.validation.parse_as("duration_seconds",

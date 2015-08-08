@@ -56,6 +56,35 @@ def number_invalidator(min_, max_):
       return "{} is above maximal allowed value {}".format(x, max_)
   return f
 
+def set_invalidator(*options):
+  text_options = ", ".join([repr(o) for o in options])
+  def f(x):
+    if x not in options:
+      return "{} is not one of: {}".format(x, text_options)
+  return f
+
+def dict_invalidator(required=None, optional=None):
+  required = required or {}
+  optional = optional or {}
+  def f(x):
+    if not isinstance(x, dict):
+      return "expected a mapping"
+    for key in required:
+      if key not in x:
+        return "missing required property '{}'".format(key)
+    for key, value in x.items():
+      try:
+        invalidator = required[key]
+      except KeyError:
+        try:
+          invalidator = optional[key]
+        except KeyError:
+          return "unexpected property '{}'".format(key)
+      reason = invalidator(value)
+      if reason:
+        return "invalid '{}': {}".format(key, reason)
+  return f
+
 Invalidators = {
   "username": users.invalidate_username,
   "password": users.invalidate_password,
@@ -63,4 +92,11 @@ Invalidators = {
   "question": lambda s: invalidate_length(s, (1, 1024)),
   "label": lambda s: invalidate_length(s, (1, 128)),
   "survey_value": number_invalidator(0, 1),
+  "bool": set_invalidator(True, False),
+  "trigger_spec": dict_invalidator(required={
+    "delay_s": number_invalidator(0, float("inf")),
+  }, optional={
+    "active": set_invalidator(True, False),
+    "min_delay_s": number_invalidator(0, float("inf")),
+  }),
 }

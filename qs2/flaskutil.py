@@ -4,6 +4,7 @@ import functools
 import logging
 
 import qs2.operations
+import qs2.error
 
 class AccessDenied(Exception):
   pass
@@ -56,7 +57,13 @@ def user_page(app, engine, url, method, write=False):
             kwargs["data"] = request.get_json()
           if write:
             kwargs["req_id"] = req_id
-          rv = f(conn=conn, *args, **kwargs)
+          try:
+            rv = f(conn=conn, *args, **kwargs)
+          except qs2.error.ValidationFailed as e:
+            return flask.jsonify(
+              status="error",
+              reason=e.message,
+            )
           if isinstance(rv, dict):
             if "status" not in rv:
               rv["status"] = "ok"
