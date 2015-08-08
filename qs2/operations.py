@@ -168,26 +168,41 @@ def get_all_questions(conn, user_id, *columns):
 
 def get_pending_questions(conn, user_id, columns=[], force=False, limit=None):
   if not columns:
-    columns = [model.survey_questions]
+    columns = [
+      model.survey_questions.c.sq_id,
+      model.survey_questions.c.question,
+      model.survey_questions.c.low_label,
+      model.survey_questions.c.middle_label,
+      model.survey_questions.c.high_label,
+      model.survey_questions.c.timestamp,
+      model.triggers.c.next_trigger,
+      model.triggers.c.mean_delay,
+      model.triggers.c.min_delay,
+      model.triggers.c.never_trigger_before,
+    ]
   now = datetime.datetime.now()
   condition = base_condition = (
-    (model.survey_questions.c.user_id_owner == user_id) &
-    (model.survey_questions.c.active) &
-    ((model.survey_questions.c.never_trigger_before == None) |
-     (model.survey_questions.c.never_trigger_before < now))
+    (model.triggers.c.user_id_owner == user_id) &
+    (model.triggers.c.active) &
+    ((model.triggers.c.never_trigger_before == None) |
+     (model.triggers.c.never_trigger_before < now))
   )
   if not force:
-    condition = base_condition & (model.survey_questions.c.next_trigger < now)
-  query = sql.select(columns).where(condition)
-  query = query.order_by(model.survey_questions.c.next_trigger.asc())
+    condition = base_condition & (model.triggers.c.next_trigger < now)
+  joined = model.triggers.join(model.survey_questions,
+    model.triggers.c.trigger_id == model.survey_questions.c.trigger_id)
+  query = sql.select(columns).where(condition).select_from(joined)
+  query = query.order_by(model.triggers.c.next_trigger.asc())
   if limit:
     query = query.limit(limit)
   data = map(dict, sql_op(conn, "fetch pending questions", query).fetchall())
-  count_query = sql.select([sql.func.count()]).select_from(model.survey_questions).where(condition)
+  count_query = sql.select([sql.func.count()]).select_from(joined).where(condition)
   count = sql_op(conn, "fetch query count", count_query).scalar()
   logging.info("fetched count %d", count)
-  first_trigger_query = sql.select([model.survey_questions.c.next_trigger]).where(
-    base_condition).order_by(model.survey_questions.c.next_trigger.asc()).limit(1)
+  first_trigger_query = sql.select([model.triggers.c.next_trigger]).\
+    select_from(joined).\
+    where(base_condition).\
+    order_by(model.triggers.c.next_trigger.asc()).limit(1)
   first_trigger = sql_op(conn, "fetch next trigger", first_trigger_query).scalar()
   logging.info("fetched trigger %s", repr(first_trigger))
   return {
@@ -260,17 +275,34 @@ def randomize_next_delay(mean_delay):
   logging.debug("randomizing %s with factor %lf: %s", mean_delay, k, result)
   return result
 
+def reset_trigger(conn, trigger_id):
+  now = datetime.datetime.now()
+  id_match = model.triggers.c.trigger_id == trigger_id
+  query = sql.select([
+    model.triggers.c.min_delay,
+    model.triggers.c.mean_delay,
+  ]).where(id_match)
+  row = sql_op(conn, "fetch trigger for reset", query).fetchone()
+  if row.min_delay:
+    never_trigger_before = now + randomize_next_delay(row.min_delay)
+  else:
+    never_trigger_before = None
+  next_trigger = now + randomize_next_delay(row.mean_delay)
+  query = model.triggers.update().where(id_match).values(
+    next_trigger = next_trigger,
+    never_trigger_before = never_trigger_before,
+  )
+  sql_op(conn, "update trigger for reset", query)
+
+def fetch_question_trigger_id(conn, user_id, question_id):
+  rv = fetch_question(conn, user_id, question_id,
+    model.survey_questions.c.trigger_id)
+  return rv["trigger_id"]
+
 def skip_question(conn, user_id, question_id):
   now = datetime.datetime.now()
   with conn.begin() as trans:
-    question = fetch_question(conn, user_id, question_id,
-      model.survey_questions.c.mean_delay,
-      model.survey_questions.c.next_trigger)
-    delay = randomize_next_delay(question["mean_delay"])
-    query = model.survey_questions.update().values(
-      next_trigger = now + delay,
-    ).where(model.survey_questions.c.sq_id == question_id)
-    sql_op(conn, "update next question trigger", query)
+    reset_trigger(conn, fetch_question_trigger_id(conn, user_id, question_id))
 
 def log_request(conn, url, referer, user_agent, method, client_ip):
   now = datetime.datetime.now()
@@ -291,16 +323,7 @@ def post_answer(conn, user_id, question_id, value,
   now = datetime.datetime.now()
   qs2.validation.check("survey_value", value)
   with conn.begin() as trans:
-    question = fetch_question(conn, user_id, question_id,
-      model.survey_questions.c.min_delay,
-      model.survey_questions.c.mean_delay,
-      model.survey_questions.c.next_trigger)
-    delay = randomize_next_delay(question["mean_delay"])
-    if question["min_delay"]:
-      min_delay = randomize_next_delay(question["min_delay"])
-    else:
-      min_delay = None
-    logging.info("delaying for %s", delay)
+    reset_trigger(conn, fetch_question_trigger_id(conn, user_id, question_id))
     query = model.survey_answers.insert().values(
       timestamp=now,
       user_id_owner=user_id,
@@ -310,11 +333,6 @@ def post_answer(conn, user_id, question_id, value,
       answer_latency=answer_latency,
     )
     (answer_id,) = sql_op(conn, "create answer", query).inserted_primary_key
-    query = model.survey_questions.update().values(
-      next_trigger = now + delay,
-      never_trigger_before = (now + min_delay) if min_delay else None,
-    ).where(model.survey_questions.c.sq_id == question_id)
-    sql_op(conn, "update next question trigger", query)
     return answer_id
 
 def post_answer_interactive(conn, username, question_id, value, skip_auth=False):
