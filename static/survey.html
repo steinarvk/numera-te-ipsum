@@ -164,7 +164,7 @@ $(function() {
   }
 
   function fetchQuestion() {
-      var url = "/qs-api/u/" + username + "/questions/pending";
+      var url = "/qs-api/u/" + username + "/pending";
       $("#refetchButton").show();
       $.ajax(url, {
           username: username,

@@ -157,7 +157,7 @@ def post_answer(conn, user_id, sq_id, data, req_id):
     )
   }
 
-@user_page("questions/pending", "GET")
+@user_page("pending", "GET")
 def get_pending(conn, user_id):
   force = request.args.get("force", type=qs2.flaskutil.parse_bool)
   limit = request.args.get("limit", type=int)
