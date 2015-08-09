@@ -180,6 +180,7 @@ _implicit_trigger_columns = [
     model.triggers.c.min_delay,
     model.triggers.c.next_trigger,
     model.triggers.c.never_trigger_before,
+    model.triggers.c.active,
 ]
 
 def get_all_event_types(conn, user_id):

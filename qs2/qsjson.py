@@ -37,6 +37,7 @@ def survey_question_json(q):
     "trigger": json_datetime(q["next_trigger"]),
     "timestamp": json_datetime(q["timestamp"]),
     "interval": json_duration(q["mean_delay"]),
+    "active": q["active"],
   }
 
 def event_type_json(ev):
@@ -48,5 +49,6 @@ def event_type_json(ev):
     "trigger": json_datetime(ev.next_trigger),
     "timestamp": json_datetime(ev.timestamp),
     "interval": json_duration(ev.mean_delay),
+    "active": ev.active,
   }
 
