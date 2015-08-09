@@ -175,28 +175,34 @@ def question_queue_query(user_id):
     (model.survey_questions.c.active)
   ).order_by(model.survey_questions.c.next_trigger.asc())
 
-def get_all_questions(conn, user_id, *columns):
-  if not columns:
-    columns = [model.survey_questions]
-  query = sql.select(columns).where(
-    (model.survey_questions.c.user_id_owner == user_id)
-  ).order_by(model.survey_questions.c.timestamp.asc())
+_implicit_trigger_columns = [
+    model.triggers.c.mean_delay,
+    model.triggers.c.min_delay,
+    model.triggers.c.next_trigger,
+    model.triggers.c.never_trigger_before,
+]
+
+def get_all_event_types(conn, user_id):
+  columns = [model.event_types] + _implicit_trigger_columns
+  query = sql.select(columns).\
+    select_from(model.event_types.join(model.triggers)).\
+    where(
+      (model.event_types.c.user_id_owner == user_id)
+    ).order_by(model.event_types.c.timestamp.asc())
+  return sql_op(conn, "fetch event types", query).fetchall()
+
+def get_all_questions(conn, user_id):
+  columns = [model.survey_questions] + _implicit_trigger_columns
+  query = sql.select(columns).\
+    select_from(model.survey_questions.join(model.triggers)).\
+    where(
+      (model.survey_questions.c.user_id_owner == user_id)
+    ).order_by(model.survey_questions.c.timestamp.asc())
   return map(dict, sql_op(conn, "fetch questions", query).fetchall())
 
 def get_pending_questions(conn, user_id, columns=[], force=False, limit=None):
   if not columns:
-    columns = [
-      model.survey_questions.c.sq_id,
-      model.survey_questions.c.question,
-      model.survey_questions.c.low_label,
-      model.survey_questions.c.middle_label,
-      model.survey_questions.c.high_label,
-      model.survey_questions.c.timestamp,
-      model.triggers.c.next_trigger,
-      model.triggers.c.mean_delay,
-      model.triggers.c.min_delay,
-      model.triggers.c.never_trigger_before,
-    ]
+    columns = [model.survey_questions] + _implicit_trigger_columns
   now = datetime.datetime.now()
   condition = base_condition = (
     (model.triggers.c.user_id_owner == user_id) &
@@ -300,14 +306,15 @@ def randomize_next_delay(mean_delay):
   logging.debug("randomizing %s with factor %lf: %s", mean_delay, k, result)
   return result
 
+def fetch_trigger(conn, trigger_id):
+  query = sql.select([model.triggers]).\
+    where(model.triggers.c.trigger_id == trigger_id)
+  return sql_op(conn, "fetch trigger", query).fetchone()
+
 def reset_trigger(conn, trigger_id):
-  now = datetime.datetime.now()
   id_match = model.triggers.c.trigger_id == trigger_id
-  query = sql.select([
-    model.triggers.c.min_delay,
-    model.triggers.c.mean_delay,
-  ]).where(id_match)
-  row = sql_op(conn, "fetch trigger for reset", query).fetchone()
+  row = fetch_trigger(conn, trigger_id)
+  now = datetime.datetime.now()
   if row.min_delay:
     never_trigger_before = now + randomize_next_delay(row.min_delay)
   else:

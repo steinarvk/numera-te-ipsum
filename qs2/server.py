@@ -56,6 +56,13 @@ def get_questions(conn, user_id):
                      qs2.operations.get_all_questions(conn, user_id)),
   }
 
+@user_page("events", "GET")
+def get_events(conn, user_id):
+  return {
+    "events": map(qs2.qsjson.event_type_json,
+                  qs2.operations.get_all_event_types(conn, user_id)),
+  }
+
 @user_page("events", "POST", write=True)
 def post_new_event_type(conn, user_id, data, req_id):
   event_type_id = qs2.operations.add_event_type(conn, user_id,

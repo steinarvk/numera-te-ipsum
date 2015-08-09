@@ -38,3 +38,15 @@ def survey_question_json(q):
     "timestamp": json_datetime(q["timestamp"]),
     "interval": json_duration(q["mean_delay"]),
   }
+
+def event_type_json(ev):
+  # TODO fix the inconsistency here, with dict/obj
+  return {
+    "id": ev.evt_id,
+    "name": ev.name,
+    "use_duration": ev.use_duration,
+    "trigger": json_datetime(ev.next_trigger),
+    "timestamp": json_datetime(ev.timestamp),
+    "interval": json_duration(ev.mean_delay),
+  }
+
