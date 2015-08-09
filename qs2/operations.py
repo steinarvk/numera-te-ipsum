@@ -201,9 +201,32 @@ def get_all_questions(conn, user_id):
     ).order_by(model.survey_questions.c.timestamp.asc())
   return map(dict, sql_op(conn, "fetch questions", query).fetchall())
 
-def get_pending_questions(conn, user_id, columns=[], force=False, limit=None):
-  if not columns:
-    columns = [model.survey_questions] + _implicit_trigger_columns
+def get_pending_events_corrections(conn, user_id, limit=None):
+  query = sql.select([model.event_record]).where(
+    (model.event_record.c.user_id_owner == user_id) &
+    (model.event_record.c.status == "unreported")
+  ).order_by(model.event_record.c.start.asc()).limit(limit)
+  results = sql_op(conn, "fetch unreported events", query).fetchall()
+  def taskify(row):
+    start = hacky_force_timezone(row.start)
+    end = hacky_force_timezone(row.end)
+    # TODO oh no, horrible, fix to use a join (late night!)
+    evt = fetch_event_type(conn, user_id, row.evt_id)
+    return {
+      "type": "event",
+      "subtype": "correct",
+      "event_correct": {
+        "event_type_id": row.evt_id,
+        "name": evt.name,
+        "start": qs2.qsjson.json_string_datetime(start),
+        "end": qs2.qsjson.json_string_datetime(end),
+      }
+    }
+  count = 0 # TODO
+  earliest = None # TODO
+  return [(row.start, taskify(row)) for row in results], count, earliest
+
+def make_trigger_conditions(conn, user_id, force):
   now = datetime.datetime.now()
   condition = base_condition = (
     (model.triggers.c.user_id_owner == user_id) &
@@ -213,13 +236,58 @@ def get_pending_questions(conn, user_id, columns=[], force=False, limit=None):
   )
   if not force:
     condition = base_condition & (model.triggers.c.next_trigger < now)
+  return condition, base_condition
+
+def get_pending_events_appends(conn, user_id, force=False, limit=None):
+  columns = [model.event_types] + _implicit_trigger_columns
+  joined = model.triggers.join(model.event_types)
+  condition, base_condition = make_trigger_conditions(conn, user_id, force=force)
+  query = sql.select(columns).select_from(joined).where(condition)
+  query = query.order_by(model.triggers.c.next_trigger.asc()).limit(limit)
+  results = sql_op(conn, "fetch pending events", query)
+  rv = []
+  for row in results:
+    # TODO, this is horrible, optimize query! (written very late at night)
+    tail = fetch_event_report_tail(conn, user_id, row)
+    rv.append((row.next_trigger, {
+      "type": "event",
+      "subtype": "append",
+      "event_append": {
+        "event_type_id": row.evt_id,
+        "name": row.name,
+        "start": qs2.qsjson.json_string_datetime(tail),
+        "end": "now",
+      },
+    }))
+  count = 0 # TODO
+  earliest = None # TODO
+  return rv, count, earliest
+
+def get_pending_events(conn, user_id, force=False, limit=None):
+  crv, cc, cea = get_pending_events_corrections(conn, user_id, limit=limit)
+  prv, pc, pea = get_pending_events_appends(conn, user_id, force=force, limit=limit)
+  earliest = cea
+  if pea is not None:
+    if earliest is None or pea < earliest:
+      earliest = pea
+  return crv + prv, cc + pc, earliest
+
+def get_pending_questions(conn, user_id, columns=[], force=False, limit=None):
+  if not columns:
+    columns = [model.survey_questions] + _implicit_trigger_columns
+  condition, base_condition = make_trigger_conditions(conn, user_id, force=force)
   joined = model.triggers.join(model.survey_questions,
     model.triggers.c.trigger_id == model.survey_questions.c.trigger_id)
   query = sql.select(columns).where(condition).select_from(joined)
   query = query.order_by(model.triggers.c.next_trigger.asc())
   if limit:
     query = query.limit(limit)
-  data = map(dict, sql_op(conn, "fetch pending questions", query).fetchall())
+  results = sql_op(conn, "fetch pending questions", query).fetchall()
+  data = [(row.next_trigger, {
+            "type": "question",
+            "question": qs2.qsjson.survey_question_json(dict(row))
+          })
+          for row in results]
   count_query = sql.select([sql.func.count()]).select_from(joined).where(condition)
   count = sql_op(conn, "fetch query count", count_query).scalar()
   logging.info("fetched count %d", count)
@@ -234,7 +302,6 @@ def get_pending_questions(conn, user_id, columns=[], force=False, limit=None):
     "count": count,
     "first_trigger": first_trigger,
   }
-
 
 def peek_question(conn, user_id):
   query = question_queue_query(user_id)

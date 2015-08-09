@@ -180,7 +180,7 @@ $(function() {
               first_in = data.first_trigger - now,
               msg;
           if (n > 0) {
-            loadQuestion(data["pending"][0]);
+            loadQuestion(data.pending[0].question);
             $("#refetchButton").hide();
             if (n == 1) {
               msg = "1 item pending";

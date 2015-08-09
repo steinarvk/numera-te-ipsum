@@ -171,21 +171,29 @@ def get_pending(conn, user_id):
   filter_types = request.args.get("types", type=qs2.flaskutil.set_parser())
   def accept(t):
     return filter_types is None or t in filter_types
-  results = qs2.operations.get_pending_questions(
-    conn, user_id, force=force, limit=limit)
-  questions = results["results"]
-  pending = []
-  if accept("question"):
-    pending.extend(map(qs2.qsjson.survey_question_json, questions))
-  pending.sort(key=operator.itemgetter("trigger"))
-  if limit:
-    pending = pending[:limit]
   rv = {
-    "pending": pending,
-    "queue_size": results["count"],
+    "pending": [],
+    "queue_size": 0,
   }
-  if results.get("first_trigger"):
-    rv["first_trigger"] = qs2.qsjson.json_datetime(results["first_trigger"])
+  def update(items, count, earliest):
+    rv["pending"].extend(items)
+    rv["queue_size"] += count
+    if earliest is not None:
+      if "first_trigger" not in rv or rv["first_trigger"] < earliest:
+        rv["first_trigger"] = earliest
+  if accept("question"):
+    qres = qs2.operations.get_pending_questions(
+      conn, user_id, force=force, limit=limit)
+    update(qres["results"], qres["count"], qres["first_trigger"])
+  if accept("event"):
+    items, n, earliest = qs2.operations.get_pending_events(
+      conn, user_id, force=force, limit=limit)
+    update(items, n, earliest)
+  rv["pending"].sort()
+  if limit:
+    rv["pending"] = rv["pending"][:limit]
+  rv["pending"] = [v for (k,v) in rv["pending"]]
+  rv["first_trigger"] = qs2.qsjson.json_datetime(rv["first_trigger"])
   return rv
 
 if __name__ == '__main__':
