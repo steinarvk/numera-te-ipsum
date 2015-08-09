@@ -14,9 +14,11 @@ import csv
 from qs2 import ui
 import qs2.csvexport
 
+from qs2.timeutil import hacky_force_timezone
+
 from sqlalchemy import sql
 
-from qs2.error import OperationFailed
+from qs2.error import OperationFailed, ValidationFailed
 
 class DbFetch(object):
   def __init__(self, conn, columns=[], **kwargs):
@@ -232,6 +234,14 @@ def peek_question(conn, user_id):
   row = sql_op(conn, "fetch question", query).fetchone()
   return dict(row)
 
+def fetch_event_type(conn, user_id, evt_id):
+  columns = [qs2.model.event_types]
+  query = sql.select(columns).where(
+    (model.event_types.c.user_id_owner == user_id) &
+    (model.event_types.c.evt_id == evt_id)
+  )
+  return sql_op(conn, "fetch event type by ID", query).fetchone()
+
 def fetch_question(conn, user_id, question_id, *columns):
   if not columns:
     columns = [model.survey_questions]
@@ -331,6 +341,85 @@ def log_request(conn, url, referer, user_agent, method, client_ip):
   )
   (req_id,) = sql_op(conn, "log request", query).inserted_primary_key
   return req_id
+
+def fetch_event_report_tail(conn, user_id, event_type):
+  query = sql.select([qs2.model.event_record.c.end]).\
+    where(
+      (qs2.model.event_record.c.evt_id == event_type.evt_id) &
+      (qs2.model.event_record.c.user_id_owner == user_id)
+    ).order_by(qs2.model.event_record.c.end.desc()).limit(1)
+  results = sql_op(conn, "fetch tail of event record", query).fetchall()
+  if results:
+    return hacky_force_timezone(results[0].end)
+  else:
+    return hacky_force_timezone(event_type.timestamp)
+
+def append_to_event_record(conn, event_type, start, end, state, req_id):
+  query = qs2.model.event_record.insert().values(
+    req_id_creator=req_id,
+    user_id_owner=event_type.user_id_owner,
+    evt_id=event_type.evt_id,
+    status=state,
+    start=start,
+    end=end,
+  )
+  (evr_id,) = sql_op(conn, "append to event record", query).inserted_primary_key
+  return evr_id
+
+def try_correct_event_report(conn, user_id, event_type, start, end, state, req_id):
+  # Note: this does not support _splitting_ events for now, but this could
+  # be implemented in the future. Until this is implemented, events (within one
+  # event type) must be reported _in order_. Their absence can be reported out of
+  # order.
+  t = qs2.model.event_record
+  query = sql.select([t.c.evr_id, t.c.status]).\
+    where(
+      (t.c.user_id_owner == user_id) &
+      (t.c.evt_id == event_type.evt_id) &
+      (t.c.start == start) &
+      (t.c.end == end)
+    )
+  results = sql_op(conn, "fetch event record for change", query).fetchall()
+  if len(results) == 0:
+    raise OperationFailed("no matching event records found")
+  if len(results) > 1:
+    raise OperationFailed("too many matching event records found")
+  status = results[0].status
+  if status != "unreported":
+    raise OperationFailed("status already reported (as: '{}')".format(status))
+  evr_id = results[0].evr_id
+  query = t.update().where(t.c.evr_id == evr_id).values(status=state)
+  sql_op(conn, "updating old event record", query)
+  return { "corrected_event_record_id": evr_id }
+
+def post_event_report(conn, user_id, event_type, start, end, state, req_id):
+  # query to see:
+  #  - whether there is an interval between [last_end, start]
+  #  - whether start < last_end (reject)
+  if end < start:
+    raise ValidationFailed("event ends before it starts")
+  if state not in ("on", "off", "unknown"):
+    raise ValidationFailed("invalid state: {}".format(state))
+  tail = fetch_event_report_tail(conn, user_id, event_type)
+  if start < tail:
+    try:
+      return try_correct_event_report(conn, user_id,
+        event_type, start, end, state, req_id)
+    except OperationFailed as e:
+      message = "retroactive change to event record, invalid update: " + e.message
+      raise OperationFailed(message)
+  rv = {}
+  if tail < start:
+    evr_id_gap = append_to_event_record(conn, event_type,
+      start=tail, end=start, state="unreported", req_id=req_id)
+    rv["missing_report"] = {
+      "start": hacky_force_timezone(tail),
+      "end": hacky_force_timezone(start),
+      "event_report_id": evr_id_gap,
+    }
+  rv["event_report_id"] = append_to_event_record(conn, event_type,
+    start=start, end=end, state=state, req_id=req_id)
+  return rv
 
 def post_answer(conn, user_id, question_id, value,
                 answer_latency=None,

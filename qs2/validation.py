@@ -1,6 +1,7 @@
 import users
 import logging
 from qs2.error import ValidationFailed
+import datetime
 
 def parse_as(name, parser, string, secret=False, loglevel=logging.DEBUG):
   try:
@@ -85,6 +86,14 @@ def dict_invalidator(required=None, optional=None):
         return "invalid '{}': {}".format(key, reason)
   return f
 
+def datetime_invalidator():
+  def f(x):
+    if not isinstance(x, datetime.datetime):
+      return "expected a datetime"
+    if not x.tzinfo:
+      return "expected time zone in datetime"
+  return f
+
 Invalidators = {
   "username": users.invalidate_username,
   "password": users.invalidate_password,
@@ -92,6 +101,7 @@ Invalidators = {
   "question": lambda s: invalidate_length(s, (1, 1024)),
   "label": lambda s: invalidate_length(s, (1, 128)),
   "survey_value": number_invalidator(0, 1),
+  "datetime": datetime_invalidator(),
   "bool": set_invalidator(True, False),
   "trigger_spec": dict_invalidator(required={
     "delay_s": number_invalidator(0, float("inf")),

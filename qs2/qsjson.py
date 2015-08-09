@@ -1,7 +1,26 @@
 import time
+import pytz
+import dateutil.parser
+import tzlocal
+import logging
+import re
 
-def json_datetime(dt):
-  return time.mktime(dt.timetuple())
+def parse_json_string_datetime(s):
+  # dateutil is nice, but a little too forgiving.
+  # detect if we weren't even given a year..
+  parsed = dateutil.parser.parse(s)
+  if not parsed.tzinfo:
+    message = "expected a time specifier with a time zone, got '{}'".format(s)
+    raise ValueError(message)
+  return parsed.astimezone(pytz.utc)
+
+def json_string_datetime(dt_with_tz):
+  dt_utc = dt_with_tz.astimezone(pytz.utc)
+  return dt_utc.isoformat()
+
+def json_datetime(dt_localtime): # deprecated, to be retired
+  assert not dt_localtime.tzinfo
+  return time.mktime(dt_localtime.timetuple())
 
 def json_duration(td):
   return td.total_seconds()

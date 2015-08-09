@@ -59,7 +59,7 @@ def user_page(app, engine, url, method, write=False):
             kwargs["req_id"] = req_id
           try:
             rv = f(conn=conn, *args, **kwargs)
-          except qs2.error.ValidationFailed as e:
+          except (qs2.error.ValidationFailed, qs2.error.OperationFailed) as e:
             return flask.jsonify(
               status="error",
               reason=e.message,

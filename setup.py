@@ -11,5 +11,8 @@ setup(
     "passlib>=1.6.2",
     "psycopg2>=2.6.1",
     "PyYAML>=3.10",
+    "pytz>=2015.4",
+    "tzlocal>=1.2",
+    "python-dateutil>=2.4.2",
   ],
 )

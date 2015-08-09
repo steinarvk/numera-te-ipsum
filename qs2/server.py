@@ -66,6 +66,41 @@ def post_new_event_type(conn, user_id, data, req_id):
   )
   return {"event_type_id": event_type_id}
 
+@user_page("events/<int:evt_id>/tail", "GET")
+def get_event_tail(conn, user_id, evt_id):
+  with conn.begin() as trans:
+    event_type = qs2.operations.fetch_event_type(conn, user_id, evt_id)
+    if not event_type:
+      return oops("no such event")
+    return {
+      "tail": qs2.qsjson.json_string_datetime(
+        qs2.operations.fetch_event_report_tail(conn, user_id, event_type)
+      ),
+    }
+
+@user_page("events/<int:evt_id>/report", "POST", write=True)
+def post_event_report(conn, user_id, evt_id, data, req_id):
+  with conn.begin() as trans:
+    evt = qs2.operations.fetch_event_type(conn, user_id, evt_id)
+    if not evt:
+      return oops("event not found")
+    start = qs2.validation.parse_as("datetime",
+      qs2.qsjson.parse_json_string_datetime, data["start"])
+    end = qs2.validation.parse_as("datetime",
+      qs2.qsjson.parse_json_string_datetime, data["end"])
+    rv = qs2.operations.post_event_report(conn, user_id, evt,
+      start=start,
+      end=end,
+      state=data["state"],
+      req_id=req_id,
+    )
+    def transform(d, k, f):
+      d[k] = f(d[k])
+    if "missing_report" in rv:
+      transform(rv["missing_report"], "start", qs2.qsjson.json_string_datetime)
+      transform(rv["missing_report"], "end", qs2.qsjson.json_string_datetime)
+    return rv
+
 @user_page("questions", "POST", write=True)
 def post_new_question(conn, user_id, data, req_id):
   delay_s = qs2.validation.parse_as("duration_seconds",
