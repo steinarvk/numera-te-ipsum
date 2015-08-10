@@ -19,6 +19,11 @@
  * @param answerTimeMs Latency of last answer.
  * @param answerPct Last answer (in %).
  * @param timeUntilNextText If the queue size is zero, human-friendly string indicating how long until the next item.
+ * @param progressPct Session progress (in %).
+ * @param progressProcessed Items processed during session.
+ * @param progressTotal Total items during session.
+ * @param progressDurationText Session duration.
+ * @param progressEtaText Session ETA.
  */
 {template .statusbar}
   {if isNonnull($queueSize)}
@@ -26,13 +31,34 @@
       <b>Queue</b>:
 
     {if $queueSize == 0}
-      No items pending (next {$timeUntilNextText}).
+      No items pending (next in {$timeUntilNextText}).
     {elseif $queueSize == 1}
       1 item pending.
     {else}
       {$queueSize} items pending.
     {/if}
 
+    </p>
+  {/if}
+
+  {if isNonnull($progressPct) and
+      isNonnull($progressEtaText) and
+      isNonnull($progressDurationText) and
+      isNonnull($progressProcessed) and
+      isNonnull($progressTotal)
+  }
+    <p class="qs_statusbar_section">
+      <b>Session length:</b>{sp}
+      {$progressDurationText}
+    </p>
+    <p class="qs_statusbar_section">
+      <b>Progress</b>:{sp}
+      {$progressPct}%{sp}
+      ({$progressProcessed}/{$progressTotal})
+    </p>
+    <p class="qs_statusbar_section">
+      <b>ETA</b>:{sp}
+      {$progressEtaText}
     </p>
   {/if}
 

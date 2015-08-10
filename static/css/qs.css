@@ -11,9 +11,15 @@ body {
   padding: 0;
   margin: 0;
 }
+.qs_statusbar {
+  -webkit-column-count: 2; /* Chrome, Safari, Opera */
+  -moz-column-count: 2; /* Firefox */
+  column-count: 2;
+}
 p.qs_statusbar_section {
   padding: 0;
   margin: 0;
+  font-size: 80%;
 }
 
 td,th {

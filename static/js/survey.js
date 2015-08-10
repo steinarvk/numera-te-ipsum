@@ -10,6 +10,83 @@ $(function() {
   var username, password;
   var t0;
   var statusbar = {};
+  var elementsLeft = 0;
+  var elementsProcessed = 0;
+  var lastElementProcessed = null;
+  var sessionBegan = null;
+
+  function fmtSeconds(s) {
+    var h, m, rv = [];
+
+    if (s >= Infinity) {
+      return "\u221e";
+    }
+
+    s = Math.round(s);
+    h = Math.floor(s / 3600);
+    s -= h * 3600;
+    m = Math.floor(s / 60);
+    s -= m * 60;
+
+    if (h > 0) {
+      rv.push("" + h + "h");
+    }
+
+    if (m > 0) {
+      rv.push("" + m + "m");
+    }
+
+    if (s > 0) {
+      rv.push("" + s + "s");
+    }
+
+    return rv.join(" ");
+  }
+
+  function updateProgress() {
+    var sessionInProgress = false,
+        speed, timeLeft,
+        elTotal = elementsLeft + elementsProcessed;
+
+    if (lastElementProcessed !== null) {
+      sessionInProgress = moment().diff(lastElementProcessed, 'seconds') < 60;
+    }
+
+    if (!sessionInProgress) {
+      elementsProcessed = 0;
+      lastElementProcessed = null;
+      sessionBegan = null;
+
+      setStatus("progressPct", null);
+    } else {
+      if (sessionBegan === null) {
+        sessionBegan = moment();
+      }
+
+      setStatus("progressDurationText",
+        fmtSeconds(moment().diff(sessionBegan, 'seconds')));
+      setStatus("progressProcessed", elementsProcessed);
+      setStatus("progressTotal", elTotal);
+      if (elementsLeft === 0) {
+        setStatus("progressPct", 100);
+        setStatus("progressEtaText", "Done!");
+      } else {
+        setStatus("progressPct",
+          (100 * elementsProcessed / elTotal).toFixed(2));
+        speed = elementsProcessed / moment().diff(sessionBegan, 'seconds');
+        setStatus("progressEtaText", fmtSeconds(elementsLeft / speed));
+      }
+    }
+  }
+
+  window.setInterval(updateProgress, 10000);
+
+  function updateProgressProcessed(nProcessed, nSize) {
+    lastElementProcessed = moment();
+    elementsProcessed += nProcessed;
+    elementsLeft = nSize;
+    updateProgress();
+  }
 
   function setStatus(key, val) {
     var msgs = [];
@@ -39,14 +116,9 @@ $(function() {
             loadQuestion(data.pending[0].question);
             $("#refetchButton").hide();
           }
+          updateProgressProcessed(0, n);
           setStatus("queueSize", n);
-          if (first_in < 60) {
-            setStatus("timeUntilNextText",
-              "in " + Math.round(first_in) + " seconds");
-          } else {
-            setStatus("timeUntilNextText",
-              moment().add(first_in, "seconds").fromNow());
-          }
+          setStatus("timeUntilNextText", fmtSeconds(first_in));
           t0 = new Date().getTime();
       });
   }
@@ -57,6 +129,7 @@ $(function() {
           password: password,
           type: "POST",
       }).done(function() {
+          updateProgressProcessed(1, elementsLeft - 1);
           fetchQuestion();
       });
   }
@@ -79,6 +152,7 @@ $(function() {
           dataType: "json",
           data: data,
       }).done(function() {
+          updateProgressProcessed(1, elementsLeft - 1);
           fetchQuestion();
       });
   }
