@@ -1,5 +1,7 @@
 from fabric.api import *
 
+import glob
+
 @task
 def setupdeps():
   sudo("apt-get install libyaml-dev")
@@ -13,6 +15,18 @@ def restart():
 def pack():
   local("python setup.py sdist --formats=gztar", capture=False)
   local("rm -rf QuantifiedSelfServer.egg-info/")
+
+@task
+def download_soy():
+  local("mkdir -p soylib/")
+  with lcd("soylib"):
+    local("wget \"https://dl.google.com/closure-templates/closure-templates-for-javascript-latest.zip\"")
+    local("unzip closure-templates-for-javascript-latest.zip")
+
+@task
+def soygen():
+  sources = ",".join(glob.glob("soy/*.soy"))
+  local("java -jar soylib/SoyToJsSrcCompiler.jar --outputPathFormat static/jsgen/templates.js --srcs " + sources)
 
 @task
 def deploy_app():

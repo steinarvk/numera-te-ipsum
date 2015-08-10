@@ -1,6 +1,21 @@
 body {
 
 }
+
+.qs_survey_question {
+  margin: 0;
+  padding: 0;
+  font-size: 120%;
+}
+.qs_survey_label {
+  padding: 0;
+  margin: 0;
+}
+p.qs_statusbar_section {
+  padding: 0;
+  margin: 0;
+}
+
 td,th {
   text-align: center;
   width: 2em;

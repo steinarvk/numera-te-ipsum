@@ -16,19 +16,7 @@ $(function() {
 
     statusbar[key] = val;
 
-    if (statusbar.queueSizeMessage !== undefined) {
-      msgs.push(statusbar.queueSizeMessage);
-    }
-
-    if (statusbar.answerTimeMs !== undefined) {
-      msgs.push("Last answer time: " + statusbar.answerTimeMs + "ms");
-    }
-
-    if (statusbar.answer !== undefined) {
-      msgs.push("Last answer: " + statusbar.answer + "%");
-    }
-
-    $("#message").html(msgs.join(", "));
+    $("#message").html(soy.renderAsElement(qs.question.statusbar, statusbar));
   }
 
   function fetchQuestion() {
@@ -50,23 +38,15 @@ $(function() {
           if (n > 0) {
             loadQuestion(data.pending[0].question);
             $("#refetchButton").hide();
-            if (n == 1) {
-              msg = "1 item pending";
-            } else {
-              msg = "" + n + " items pending";
-            }
-          } else if (first_in && first_in > 0) {
-            msg = "No items pending (next ";
-            if (first_in < 60) {
-              msg += "in " + Math.round(first_in) + " seconds";
-            } else {
-              msg += moment().add(first_in, "seconds").fromNow();
-            }
-            msg += ")";
-          } else {
-            msg = "No items pending";
           }
-          setStatus("queueSizeMessage", msg);
+          setStatus("queueSize", n);
+          if (first_in < 60) {
+            setStatus("timeUntilNextText",
+              "in " + Math.round(first_in) + " seconds");
+          } else {
+            setStatus("timeUntilNextText",
+              moment().add(first_in, "seconds").fromNow());
+          }
           t0 = new Date().getTime();
       });
   }
@@ -88,7 +68,7 @@ $(function() {
           value: v * 0.01,
           latency_ms: latency,
       });
-      setStatus("answer", v);
+      setStatus("answerPct", v);
       setStatus("answerTimeMs", latency);
       $("#surveyForm").hide();
       $.ajax(url, {
@@ -103,10 +83,16 @@ $(function() {
       });
   }
   function loadQuestion(q) {
-    $("#questionText").html(q.text);
-    $("#leftLabel").html(q.labels.low);
-    $("#centerLabel").html(q.labels.middle || "");
-    $("#rightLabel").html(q.labels.high);
+    console.log("loadQuestion!");
+    console.log(q);
+    $("#questionText").html(soy.renderAsElement(
+      qs.question.question, {text: q.text}));
+    $("#leftLabel").html(soy.renderAsElement(
+      qs.question.label, {text: q.labels.low}));
+    $("#centerLabel").html(soy.renderAsElement(
+      qs.question.label, {text: q.labels.middle || ""}));
+    $("#rightLabel").html(soy.renderAsElement(
+      qs.question.label, {text: q.labels.high}));
     $("#surveyForm").show();
     $("#refetchButton").hide();
     slider.reset();

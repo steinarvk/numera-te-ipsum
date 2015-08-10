@@ -1,0 +1,16 @@
+{namespace qs.core autoescape="strict"}
+
+/** Simple message meant for testing.
+ * @param text Message text.
+ */
+{template .message}
+  <p><b>Message</b>: {$text}</p>
+{/template}
+
+/** Simple link for testing.
+ * @param target Link target URL.
+ * @param text Link text.
+ */
+{template .link}
+  <a href="{$target}">{$text}</a>
+{/template}
