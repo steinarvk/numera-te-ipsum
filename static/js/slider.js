@@ -19,8 +19,9 @@ function addSlider(par, opts) {
 
   function reset() {
     value = null;
-    $(labelElement).html();
+    $(labelElement).html("");
     $(barElement).css("width", "0px");
+    $(arenaElement).toggleClass("sliderInactive", true);
   }
 
   function hasValue() {
@@ -36,6 +37,9 @@ function addSlider(par, opts) {
   }
 
   function getValue() {
+    if (value === null) {
+      return null;
+    }
     return rounded(value);
   }
 
@@ -43,6 +47,7 @@ function addSlider(par, opts) {
     if (isNaN(v)) {
       return;
     }
+    $(arenaElement).toggleClass("sliderInactive", false);
     var wid = $(arenaElement).width();
     if (v < 0) {
       v = 0;
@@ -73,7 +78,7 @@ function addSlider(par, opts) {
 
   return {
     getValue: getValue,
-    reset: function() { setValue(0.5); },
+    reset: reset,
     isSet: hasValue,
   };
 };

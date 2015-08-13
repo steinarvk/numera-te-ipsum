@@ -111,3 +111,6 @@ td,th {
   text-size: 100%;
   background-color: #aaf;
 }
+.sliderInactive {
+  background-color: #999;
+}

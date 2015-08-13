@@ -184,8 +184,11 @@ $(function() {
     fetchQuestion();
   });
   $("#submitButton").click(function() {
-    postAnswer(currentQ, slider.getValue());
-    currentQ = null;
+    var val = slider.getValue();
+    if (val !== null) {
+      postAnswer(currentQ, slider.getValue());
+      currentQ = null;
+    }
   });
   $("#skipButton").click(function() {
     skipQuestion(currentQ);
