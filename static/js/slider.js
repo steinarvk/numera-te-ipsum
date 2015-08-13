@@ -6,6 +6,7 @@ function addSlider(par, opts) {
       maxScale = opts.maxScale || 100,
       minScale = opts.minScale || 0,
       speedMul = opts.speedMultiplier || 1.0,
+      roundingFunction = opts.snapTo ? roundedSnapTo : rounded,
       value = null,
       origin;
 
@@ -32,6 +33,23 @@ function addSlider(par, opts) {
     return Math.round(x * (maxScale - minScale)) + minScale;
   }
 
+  function roundedSnapTo(x) {
+    var totalSteps = 100,
+        bigSteps = 20,
+        k = totalSteps / bigSteps,
+        tolerance = 0.9,
+        closestBigStep = Math.round(bigSteps * x),
+        stepOffset = (bigSteps * x - closestBigStep) * k,
+        withinMargin = Math.abs(stepOffset) < tolerance,
+        snapPoint = closestBigStep/bigSteps * (maxScale - minScale) + minScale;
+
+    if (withinMargin) {
+      return Math.round(snapPoint);
+    }
+
+    return rounded(x);
+  }
+
   function formatted(v) {
     return "" + v + "%";
   }
@@ -40,7 +58,7 @@ function addSlider(par, opts) {
     if (value === null) {
       return null;
     }
-    return rounded(value);
+    return roundingFunction(value);
   }
 
   function setValue(v) {
@@ -55,7 +73,7 @@ function addSlider(par, opts) {
       v = 1;
     }
     value = v;
-    $(labelElement).html(formatted(rounded(value)));
+    $(labelElement).html(formatted(roundingFunction(value)));
     $(barElement).css("width", (value * wid) + "px");
 
     if (opts.onChange) {

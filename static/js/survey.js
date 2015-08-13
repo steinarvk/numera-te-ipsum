@@ -5,6 +5,7 @@ $(function() {
     onChange: function(val) {
       $("#submitButton").prop("disabled", false);
     },
+    snapTo: true,
   });
   var currentQ;
   var username, password;
