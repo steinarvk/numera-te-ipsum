@@ -177,16 +177,9 @@ $(function() {
   }
 
   function onLoggedIn(credentials) {
-    showMessage({
-      header: "Success!",
-      text: "Logged in as " + credentials.username,
-    });
-
     statusbar.update({
       username: credentials.username,
     });
-    statusbar.setupQueue(0);
-    statusbar.update({nextItemAt: moment().add(15, "minutes")});
   }
 
   $("#qs-id-logout").click(function() {
