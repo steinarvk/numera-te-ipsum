@@ -11,6 +11,10 @@ modules.util = (function() {
       return "0";
     }
 
+    if (s < 0) {
+      return "-" + fmtSeconds(-s);
+    }
+
     s = Math.round(s);
     h = Math.floor(s / 3600);
     s -= h * 3600;
