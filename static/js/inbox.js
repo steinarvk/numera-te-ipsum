@@ -40,6 +40,7 @@ modules.inbox = function(options) {
   function pop() {
     if (queue.length > 0) {
       var rv = queue.shift();
+      metadata.size -= 1;
       ack.push(rv);
       return rv;
     }

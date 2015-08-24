@@ -10,7 +10,7 @@ $(function() {
     onLoginFailure: onLoginFailure,
   });
   var currentItem = null;
-  var itemCallbacks = {};
+  var itemCallbacks = null;
 
   if (!credentials.ok) {
     $("#qs-modal-login-dialog").modal("show");
@@ -43,8 +43,7 @@ $(function() {
   function loadNextItem() {
     var item = inbox.pop();
 
-    itemCallbacks = {};
-    skipCallback = null;
+    itemCallbacks = null;
 
     if (!item) {
       showMessage({
@@ -54,6 +53,8 @@ $(function() {
       inbox.askForMore();
       return;
     }
+
+    itemCallbacks = {};
 
     if (item.type !== "question") {
       showMessage({
@@ -93,7 +94,7 @@ $(function() {
     itemCallbacks.skipCallback = function() {
       var url = "/qs-api/u/" + username + "/questions/" + q.id + "/skip";
 
-      itemCallbacks = {};
+      itemCallbacks = null;
       control.die();
 
       $.ajax(url, {
@@ -122,7 +123,7 @@ $(function() {
         return false;
       }
 
-      itemCallbacks = {};
+      itemCallbacks = null;
       control.die();
 
       if (currentItem.question.id !== q.id) {
@@ -162,13 +163,21 @@ $(function() {
   }
 
   function onFetched() {
-    var itemsLeft = inbox.metadata.size;
+    var itemsLeft;
 
     if (!currentItem) {
       loadNextItem();
-    } else {
+    }
+
+    itemsLeft = inbox.metadata.size;
+
+    if (itemCallbacks) {
+      console.log("yes we have inbox callbacks");
       itemsLeft++;
     }
+
+    console.log("raw inbox size: " + inbox.metadata.size);
+    console.log("modified: " + itemsLeft);
 
     statusbar.update({
       itemsLeft: itemsLeft,
@@ -179,6 +188,8 @@ $(function() {
   function onLoggedIn(credentials) {
     statusbar.update({
       username: credentials.username,
+      itemsLeft: 0,
+      itemsDone: 0,
     });
   }
 
