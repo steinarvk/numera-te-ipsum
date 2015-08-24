@@ -26,7 +26,7 @@ def download_soy():
 @task
 def soygen():
   sources = ",".join(glob.glob("soy/*.soy"))
-  local("java -jar soylib/SoyToJsSrcCompiler.jar --outputPathFormat static/jsgen/templates.js --srcs " + sources)
+  local("java -jar soylib/SoyToJsSrcCompiler.jar --outputPathFormat static/jsgen/templates.js --shouldProvideRequireSoyNamespaces --srcs " + sources)
 
 @task
 def deploy_app():

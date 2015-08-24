@@ -1,16 +1,370 @@
 {namespace qs.core autoescape="strict"}
 
-/** Simple message meant for testing.
- * @param text Message text.
- */
-{template .message}
-  <p><b>Message</b>: {$text}</p>
+/** A simple but safe string. (For "N/A" and the like.) */
+{template .string}
+  {@param text: string}
+  {$text}
 {/template}
 
-/** Simple link for testing.
- * @param target Link target URL.
- * @param text Link text.
- */
-{template .link}
-  <a href="{$target}">{$text}</a>
+/** A generic panel with a title. */
+{template .panel}
+  {@param title: string}
+  {@param content: html}
+
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      {$title}
+    </div>
+    <div class="panel-body">
+      {$content}
+    </div>
+  </div>
+{/template}
+
+/** A choice slider (0% to 100%). */
+{template .slider}
+  <div class="progress qs-progress-slider">
+    <div class="progress-bar qs-progress-slider"
+         role="progressbar"
+    >
+    </div>
+    <span class="qs-progress-label">
+    </span>
+  </div>
+{/template}
+
+/** A question panel. */
+{template .question_panel}
+  {@param text: string}
+  {@param? label_low: string}
+  {@param? label_medium: string}
+  {@param? label_high: string}
+
+  {call .panel data="all"}
+    {param title: 'Question' /}
+    {param content kind="html"}
+      <div class="qs-upper-content">
+        {$text}
+      </div>
+      <div class="qs-lower-content">
+        <table>
+          <tr>
+            <td colspan="3">
+            {call .slider /}
+          {if isNonnull($label_low) or
+              isNonnull($label_medium) or
+              isNonnull($label_high)
+          }
+            <tr>
+              <td class="qs-left-label">
+                {if isNonnull($label_low)}
+                  {$label_low}
+                {/if}
+              <td class="qs-middle-label">
+                {if isNonnull($label_medium)}
+                  {$label_medium}
+                {/if}
+              <td class="qs-right-label">
+                {if isNonnull($label_high)}
+                  {$label_high}
+                {/if}
+          {/if}
+        </table>
+      </div>
+    {/param}
+  {/call}
+{/template}
+
+/** A button. */
+{template .button}
+  {@param text: string}
+  {@param? style: string}
+  {@param? id: string}
+  {@param? show_modal: string}
+  {@param? dismiss: bool}
+  {@param? class: string}
+  
+  <button type="button"
+          class="btn
+                 btn-
+                 {if isNonnull($style)}
+                  {$style}
+                 {else}
+                  default
+                 {/if}
+                 {sp}
+                 btn-lg{sp}
+                 {if isNonnull($class)}
+                  {$class}
+                 {/if}
+                 {sp}
+          "
+          {if isNonnull($show_modal)}
+            data-toggle="modal"
+            data-target="#qs-modal-{$show_modal}"
+          {/if}
+          {if $dismiss}
+            data-dismiss="modal"
+          {/if}
+          {if isNonnull($id)}
+            id="{$id}"
+          {/if}
+  >
+    {$text}
+  </button>
+{/template}
+
+/** Login dialog. */
+{template .login_dialog}
+  {@param id: string}
+
+  {call .modal}
+    {param title: 'Login' /}
+    {param id: $id /}
+    {param content kind="html"}
+      <table>
+        <tr>
+          <td>Username:
+          <td><input type="text" id="{$id}-username" />
+        <tr>
+          <td>Password:
+          <td><input type="password" id="{$id}-password" />
+      </table>
+      {call .button}
+        {param id: $id + '-submit' /}
+        {param class: 'qs-login-button' /}
+        {param text: 'Login' /}
+      {/call}
+    {/param}
+  {/call}
+{/template}
+
+/** A modal dialog. */
+{template .modal}
+  {@param title: string}
+  {@param content: html}
+  {@param id: string}
+  {@param? footer_content: html}
+  {@param? close_button: bool}
+
+  <div class="modal"
+       tabindex="-1"
+       id="qs-modal-{$id}"
+       role="dialog"
+       aria-hidden="true"
+       >
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal"
+            aria-label="Close">
+            <span aria-hidden="true">&#215;</span>
+          </button>
+          <h5 class="modal-title">
+            {$title}
+          </h5>
+        </div>
+        <div class="modal-body">
+          {$content}
+        </div>
+        <div class="modal-footer"
+             {if not($close_button or
+                     isNonnull($footer_content))
+             }
+               hidden="true"
+             {/if}
+        >
+          {if $close_button}
+            {call .button}
+              {param text: 'Close' /}
+              {param dismiss: true /}
+            {/call}
+          {/if}
+          {if isNonnull($footer_content) }
+            {$footer_content}
+          {/if}
+        </div>
+      </div>
+    </div>
+  </div>
+{/template}
+
+/** Session timer label. */
+{template .session_timer_label}
+  {@param key: string}
+  {@param value: string}
+  <span class="qs-session-timer-label">
+    <strong>{$key}: </strong> {$value}
+  </span>
+{/template}
+
+/** Session time indicators. */
+{template .session_timers}
+  <div class="progress">
+    <div class="progress-bar"
+         role="progressbar"
+         id="qs-id-session-timeout-progress-bar"
+    >
+    </div>
+  </div>
+  <div id="qs-id-session-estimated-time-left"></div>
+  <div id="qs-id-session-time-spent"></div>
+  <div id="qs-id-last-item-processing-time"></div>
+{/template}
+
+/** Queue progress bar label */
+{template .queue_progress_bar_label}
+  {@param? done: string}
+  {@param? total: string}
+  {@param? next_in: string}
+
+  {if isNonnull($next_in)}
+    No items, next in: {$next_in}
+  {elseif isNonnull($done) and isNonnull($total)}
+    {$done} out of {$total}
+  {else}
+    N/A
+  {/if}
+{/template}
+
+/** Queue progress bar */
+{template .queue_progress_bar}
+  <div class="progress qs-queue-progress-bar">
+    <div class="progress-bar qs-queue-progress-bar"
+         role="progressbar"
+         id="qs-id-queue-progress-bar"
+    >
+    </div>
+    <span id="qs-id-queue-progress-label">
+    </span>
+  </div>
+{/template}
+
+/** Username label */
+{template .username_label}
+  {@param username: string}
+
+  <div class="qs-username-label">
+    {if $username}
+      {$username}
+    {else}
+      (not logged in)
+    {/if}
+  </div>
+{/template}
+
+/** Application header */
+{template .header}
+  <nav class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="qs-vertical-header-group qs-vertical-header-group-wide">
+        {call .session_timers}
+        {/call}
+      </div>
+      <div class="qs-vertical-header-group qs-vertical-header-group-wide">
+        {call .queue_progress_bar}
+        {/call}
+      </div>
+      <div class="qs-vertical-header-group">
+        <div id="qs-header-username-label">
+        </div>
+        <div class="btn-group">
+          <button type="button"
+                  class="btn btn-default dropdown-toggle"
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+          >
+            Options
+            <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu">
+            <li>
+              <a data-toggle="modal"
+                 data-target="#qs-modal-login-dialog">
+              Login
+              </a>
+            </li>
+            <li>
+              <a data-toggle="modal"
+                 id="qs-id-logout">
+              Log out
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+{/template}
+
+/** Alert message. */
+{template .message}
+  {@param text: string}
+  {@param? header: string}
+  {@param? style: string}
+
+  <div class="alert
+              alert-
+              {if isNonnull($style)}
+                {$style}
+              {else}
+                info
+              {/if}
+              {sp}
+              alert-dismissible"
+       role="alert">
+    {if isNonnull($header)}
+      <strong>{$header}</strong>
+      {sp}
+    {/if}
+    {$text}
+    <button type="button"
+            class="close"
+            data-dismiss="alert"
+            aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+{/template}
+
+/** Core application */
+{template .app}
+  {call .login_dialog}
+    {param id: 'login-dialog' /}
+  {/call}
+
+  <div id="qs-container">
+    {call .header /}
+
+    <div id="qs-main">
+      <div id="qs-messages">
+      </div>
+      <div id="qs-main-widget">
+      </div>
+    </div>
+
+    <div id="qs-footer">
+      <div class="btn-group group-dropdown">
+        {call .button}
+          {param style: 'success' /}
+          {param id: 'qs-id-submit-item-button' /}
+          {param class: 'qs-footer-button' /}
+          {param text: 'Submit' /}
+        {/call}
+        {call .button}
+          {param style: 'info' /}
+          {param id: 'qs-id-edit-item-button' /}
+          {param class: 'qs-footer-button' /}
+          {param text: 'Edit' /}
+        {/call}
+        {call .button}
+          {param style: 'danger' /}
+          {param id: 'qs-id-skip-item-button' /}
+          {param class: 'qs-footer-button' /}
+          {param text: 'Skip' /}
+        {/call}
+      </div>
+    </div>
+  </div>
 {/template}

@@ -1,0 +1,123 @@
+.panel {
+  margin: 0.2cm;
+  margin-top: 1cm;
+  margin-bottom: 2cm;
+}
+
+.panel-heading {
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 80%;
+  text-align: right;
+}
+
+.qs-session-timer-label {
+  white-space: nowrap;
+}
+
+.qs-progress-slider {
+  transition: none;
+  height: 3cm;
+}
+
+.qs-progress-label {
+  font-size: 2cm;
+  line-height: 3cm;
+  vertical-align: middle;
+}
+
+.qs-footer-button {
+  display: block;
+  float: left;
+  height: 100%;
+}
+
+.qs-upper-content {
+}
+
+.qs-question-text {
+  float: left;
+  width: calc(100% - 2cm - 0.5cm);
+}
+
+.qs-lower-content {
+  padding-top: 1cm;
+  clear: both;
+}
+
+.qs-lower-content table {
+  width: 100%;
+}
+
+.qs-left-label {
+  text-align: left;
+  width: 33%;
+}
+
+.qs-middle-label {
+  text-align: center;
+  width: 34%;
+}
+
+.qs-right-label {
+  text-align: right;
+  width: 33%;
+}
+
+#qs-header {
+  position: fixed;
+  width: 100%;
+  height: 3cm;
+  top: 0;
+  left: 0;
+}
+
+#qs-main {
+  position: absolute;
+  width: 100%;
+  height: calc(100%-3cm-2cm);
+  top: 3cm;
+  left: 0;
+}
+
+#qs-footer {
+  position: fixed;
+  width: 100%;
+  height: 2cm;
+  bottom: 0;
+  left: 0;
+}
+
+html, body {
+  height: 100%;
+}
+
+#qs-container {
+  min-height: 100%;
+  position: relative;
+}
+
+.qs-username-label {
+  display: inline-block;
+  width: 2cm;
+  height: 1em;
+  line-height: 1em;
+  text-align: center;
+}
+
+.qs-queue-progress-bar {
+  height: 100%;
+}
+
+.qs-vertical-header-group {
+  display: inline-block;
+  height: 3cm;
+  width: 2cm;
+  position: relative;
+  top: 0;
+  vertical-align: top;
+}
+
+.qs-vertical-header-group-wide {
+  width: 30%;
+}

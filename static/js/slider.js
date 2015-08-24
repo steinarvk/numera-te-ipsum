@@ -86,12 +86,8 @@ function addSlider(par, opts) {
         offset = ev.pageX - targetOffset.left;
     setValue(offset / $(arenaElement).width());
   });
-  hammer.on("panstart", function(ev) {
-    origin = value;
-  });
-  hammer.on("pan", function(ev) {
-    var wid = $(arenaElement).width();
-    setValue(origin + speedMul * ev.deltaX / wid);
+  $(arenaElement).on("touchstart touchmove", function(ev) {
+    console.log("foo");
   });
 
   return {
