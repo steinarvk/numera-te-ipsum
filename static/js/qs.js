@@ -206,6 +206,10 @@ $(function() {
     }, 1000);
   });
 
+  $("#qs-id-force-refetch").click(function() {
+    inbox.fetch();
+  });
+
   $("#qs-id-skip-item-button").click(function() {
     if (itemCallbacks) {
       if (itemCallbacks.submitCallback()) {
