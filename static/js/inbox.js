@@ -61,6 +61,8 @@ modules.inbox = function(options) {
         console.log("Item was acked:");
         console.log(queue[0]);
         nextAcked.push(queue.shift());
+      } else {
+        break;
       }
     }
     ack = nextAcked;
