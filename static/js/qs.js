@@ -43,6 +43,9 @@ $(function() {
   function loadNextItem() {
     var item = inbox.pop();
 
+    if (itemCallbacks) {
+      itemCallbacks.dismiss();
+    }
     itemCallbacks = null;
 
     if (!item) {
@@ -89,7 +92,11 @@ $(function() {
       }
     );
 
-    control = slider.init(main);
+    control = modules.slider.init(main);
+
+    itemCallbacks.dismiss = function() {
+      control.die();
+    }
 
     itemCallbacks.skipCallback = function() {
       var url = "/qs-api/u/" + username + "/questions/" + q.id + "/skip";

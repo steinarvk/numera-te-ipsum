@@ -1,4 +1,5 @@
-var slider = (function(){
+modules = modules || {};
+modules.slider = (function(){
   function init(root) {
     root = $(root);
 
@@ -175,13 +176,14 @@ var slider = (function(){
       return roundedSnapTo(data.value);
     }
 
-    teardownMouse();
-    teardownTouch();
+    console.log("setting up touch handlers");
     setupMouse();
     setupTouch();
 
     function die() {
-      // TODO remove?
+      console.log("tearing down touch handlers");
+      teardownMouse();
+      teardownTouch();
     }
 
     return {
