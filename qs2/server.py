@@ -117,6 +117,7 @@ def post_new_question(conn, user_id, data, req_id):
       req_id_creator=req_id,
       question=data["question"],
       low_label=data["low"],
+      middle_label=data.get("middle"),
       high_label=data["high"],
       metadata=data.get("metadata"),
       trigger_spec={
