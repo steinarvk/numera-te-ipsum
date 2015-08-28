@@ -139,6 +139,7 @@ def create_trigger(conn, user_id, trigger_type, spec):
 
 def add_question(conn, user_id, question, low_label, high_label,
                  middle_label=None,
+                 metadata=None,
                  req_id_creator=None,
                  trigger_spec=None):
   qs2.validation.check("question", question, secret=True)
@@ -146,6 +147,8 @@ def add_question(conn, user_id, question, low_label, high_label,
   qs2.validation.check("label", high_label, secret=True)
   if middle_label:
     qs2.validation.check("label", middle_label, secret=True)
+  if metadata:
+    metadata = json.dumps(metadata)
   with conn.begin() as trans:
     trigger_id = create_trigger(conn, user_id, "question", trigger_spec)
     now = datetime.datetime.now()
@@ -156,6 +159,7 @@ def add_question(conn, user_id, question, low_label, high_label,
       low_label=low_label,
       high_label=high_label,
       middle_label=middle_label,
+      metadata=metadata,
       trigger_id=trigger_id,
       req_id_creator=req_id_creator,
     )
