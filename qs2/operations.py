@@ -131,7 +131,8 @@ def create_trigger(conn, user_id, trigger_type, spec):
   # when the questions are first asked. (Consider very long
   # delays for questions to be asked infrequently, e.g.
   # once every year.)
-  until_first_trigger = datetime.timedelta(seconds=random.random()*mean_delay)
+  until_first_trigger = datetime.timedelta(
+    seconds=random.random()*mean_delay.total_seconds())
   next_trigger = now + until_first_trigger
   query = model.triggers.insert().values(
     type=trigger_type,
