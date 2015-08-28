@@ -125,6 +125,13 @@ def create_trigger(conn, user_id, trigger_type, spec):
   mean_delay = datetime.timedelta(seconds=spec.get("delay_s", 3600))
   min_delay = datetime.timedelta(seconds=spec.get("min_delay_s", 300))
   now = datetime.datetime.now()
+  # There's a good reason to have this be uniform rather than
+  # using normal delays -- this way we get a good spread of
+  # when the questions are first asked. (Consider very long
+  # delays for questions to be asked infrequently, e.g.
+  # once every year.)
+  until_first_trigger = datetime.timedelta(seconds=random.random()*mean_delay)
+  next_trigger = now + until_first_trigger
   query = model.triggers.insert().values(
     type=trigger_type,
     user_id_owner=user_id,
@@ -132,7 +139,7 @@ def create_trigger(conn, user_id, trigger_type, spec):
     min_delay=min_delay,
     mean_delay=mean_delay,
     never_trigger_before=now,
-    next_trigger=now,
+    next_trigger=next_trigger,
   )
   (trigger_id,) = sql_op(conn, "create new trigger", query).inserted_primary_key
   return trigger_id
