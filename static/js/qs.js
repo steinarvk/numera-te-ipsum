@@ -236,4 +236,64 @@ $(function() {
       }
     }
   });
+
+  $("#new-question-dialog-submit").click(function() {
+    var data = {};
+
+    function goodbye(msg) {
+      showMessage(msg);
+      $("#qs-modal-new-question-dialog").modal("hide");
+    }
+
+    function err(reason) {
+      goodbye({
+        style: "danger",
+        header: "Error adding new question.",
+        text: reason,
+      });
+    }
+
+    data.question = $("#new-question-dialog-question-text").val();
+    if (data.question.length < 1) {
+      return err("question text is required");
+    }
+
+    data.low = $("#new-question-dialog-low-label").val();
+    if (data.low.length < 1) {
+      return err("lower-extreme label text is required");
+    }
+
+    data.high = $("#new-question-dialog-high-label").val();
+    if (data.high.length < 1) {
+      return err("upper-extreme label text is required");
+    }
+
+    data.middle = $("#new-question-dialog-middle-label").val();
+    if (!data.middle) {
+      delete data.middle;
+    }
+
+    data.delay = $("#new-question-dialog-frequency").val();
+    if (data.delay.length < 1) {
+      return err("frequency is required");
+    }
+
+    $.ajax("/qs-api/u/" + credentials.username + "/questions", {
+        username: credentials.username,
+        password: credentials.password,
+        type: "POST",
+        contentType: "application/json; charset: utf-8",
+        dataType: "json",
+        data: JSON.stringify(data),
+    }).done(function() {
+      goodbye({
+        style: "info",
+        header: "Success!",
+        text: "Added a new question ('" + data.question + "')",
+      });
+    }).fail(function() {
+      err("network error");
+    });
+
+  });
 });

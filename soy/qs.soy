@@ -114,6 +114,58 @@
   </button>
 {/template}
 
+
+
+/** New question dialog. */
+{template .new_question_dialog}
+  {@param id: string}
+
+  {call .modal}
+    {param title: 'Add new question' /}
+    {param id: $id /}
+    {param close_button: true /}
+    {param content kind="html"}
+      <table>
+        <tr>
+          <td>Question text:
+          <td><input type="text" id="{$id}-question-text" />
+        <tr>
+          <td>Low-extreme label:
+          <td><input type="text" id="{$id}-low-label" />
+        <tr>
+          <td>High-extreme label:
+          <td><input type="text" id="{$id}-high-label" />
+        <tr>
+          <td>Middle label (optional):
+          <td><input type="text" id="{$id}-middle-label" />
+        <tr>
+          <td>Question frequency:
+          <td>
+            <select id="{$id}-frequency">
+              <option value="1h">Every hour</option>
+              <option value="2h">Every two hours</option>
+              <option value="4h">Every four hours</option>
+              <option value="8h">Every eight hours</option>
+              <option value="1d">Every day</option>
+              <option value="2d">Every other day</option>
+              <option value="7d">Every week</option>
+              <option value="14d">Every other week</option>
+              <option value="30d">Every month</option>
+            </select>
+      </table>
+    {/param}
+    {param footer_content kind="html"}
+      {call .button}
+        {param id: $id + '-submit' /}
+        {param class: 'qs-submit-new-question' /}
+        {param style: 'success' /}
+        {param text: 'Submit' /}
+      {/call}
+    {/param}
+  {/call}
+{/template}
+
+
 /** Login dialog. */
 {template .login_dialog}
   {@param id: string}
@@ -174,14 +226,14 @@
                hidden="true"
              {/if}
         >
+          {if isNonnull($footer_content) }
+            {$footer_content}
+          {/if}
           {if $close_button}
             {call .button}
               {param text: 'Close' /}
               {param dismiss: true /}
             {/call}
-          {/if}
-          {if isNonnull($footer_content) }
-            {$footer_content}
           {/if}
         </div>
       </div>
@@ -292,6 +344,12 @@
             </li>
             <li>
               <a data-toggle="modal"
+                 data-target="#qs-modal-new-question-dialog">
+              New question
+              </a>
+            </li>
+            <li>
+              <a data-toggle="modal"
                  id="qs-id-logout">
               Log out
               </a>
@@ -337,6 +395,10 @@
 {template .app}
   {call .login_dialog}
     {param id: 'login-dialog' /}
+  {/call}
+
+  {call .new_question_dialog}
+    {param id: 'new-question-dialog' /}
   {/call}
 
   <div id="qs-container">

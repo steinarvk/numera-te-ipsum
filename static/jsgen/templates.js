@@ -115,6 +115,16 @@ if (goog.DEBUG) {
 }
 
 
+qs.core.new_question_dialog = function(opt_data, opt_ignored) {
+  goog.asserts.assert(goog.isString(opt_data.id) || (opt_data.id instanceof goog.soy.data.SanitizedContent), "expected param 'id' of type string|goog.soy.data.SanitizedContent.");
+  var id = /** @type {string|goog.soy.data.SanitizedContent} */ (opt_data.id);
+  return soydata.VERY_UNSAFE.ordainSanitizedHtml(qs.core.modal({title: 'Add new question', id: id, close_button: true, content: soydata.VERY_UNSAFE.$$ordainSanitizedHtmlForInternalBlocks('<table><tr><td>Question text:<td><input type="text" id="' + soy.$$escapeHtmlAttribute(id) + '-question-text" /><tr><td>Low-extreme label:<td><input type="text" id="' + soy.$$escapeHtmlAttribute(id) + '-low-label" /><tr><td>High-extreme label:<td><input type="text" id="' + soy.$$escapeHtmlAttribute(id) + '-high-label" /><tr><td>Middle label (optional):<td><input type="text" id="' + soy.$$escapeHtmlAttribute(id) + '-middle-label" /><tr><td>Question frequency:<td><select id="' + soy.$$escapeHtmlAttribute(id) + '-frequency"><option value="1h">Every hour</option><option value="2h">Every two hours</option><option value="4h">Every four hours</option><option value="8h">Every eight hours</option><option value="1d">Every day</option><option value="2d">Every other day</option><option value="7d">Every week</option><option value="14d">Every other week</option><option value="30d">Every month</option></select></table>'), footer_content: soydata.VERY_UNSAFE.$$ordainSanitizedHtmlForInternalBlocks('' + qs.core.button({id: id + '-submit', class: 'qs-submit-new-question', style: 'success', text: 'Submit'}))}));
+};
+if (goog.DEBUG) {
+  qs.core.new_question_dialog.soyTemplateName = 'qs.core.new_question_dialog';
+}
+
+
 qs.core.login_dialog = function(opt_data, opt_ignored) {
   goog.asserts.assert(goog.isString(opt_data.id) || (opt_data.id instanceof goog.soy.data.SanitizedContent), "expected param 'id' of type string|goog.soy.data.SanitizedContent.");
   var id = /** @type {string|goog.soy.data.SanitizedContent} */ (opt_data.id);
@@ -136,7 +146,7 @@ qs.core.modal = function(opt_data, opt_ignored) {
   var footer_content = /** @type {soydata.SanitizedHtml|string|undefined} */ (opt_data.footer_content);
   goog.asserts.assert(opt_data.close_button == null || goog.isBoolean(opt_data.close_button), "expected param 'close_button' of type boolean|null|undefined.");
   var close_button = /** @type {boolean|null|undefined} */ (opt_data.close_button);
-  return soydata.VERY_UNSAFE.ordainSanitizedHtml('<div class="modal" tabindex="-1" id="qs-modal-' + soy.$$escapeHtmlAttribute(id) + '" role="dialog" aria-hidden="true" ><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&#215;</span></button><h5 class="modal-title">' + soy.$$escapeHtml(title) + '</h5></div><div class="modal-body">' + soy.$$escapeHtml(content) + '</div><div class="modal-footer"' + ((! (close_button || footer_content != null)) ? 'hidden="true"' : '') + '>' + ((close_button) ? qs.core.button({text: 'Close', dismiss: true}) : '') + ((footer_content != null) ? soy.$$escapeHtml(footer_content) : '') + '</div></div></div></div>');
+  return soydata.VERY_UNSAFE.ordainSanitizedHtml('<div class="modal" tabindex="-1" id="qs-modal-' + soy.$$escapeHtmlAttribute(id) + '" role="dialog" aria-hidden="true" ><div class="modal-dialog" role="document"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&#215;</span></button><h5 class="modal-title">' + soy.$$escapeHtml(title) + '</h5></div><div class="modal-body">' + soy.$$escapeHtml(content) + '</div><div class="modal-footer"' + ((! (close_button || footer_content != null)) ? 'hidden="true"' : '') + '>' + ((footer_content != null) ? soy.$$escapeHtml(footer_content) : '') + ((close_button) ? qs.core.button({text: 'Close', dismiss: true}) : '') + '</div></div></div></div>');
 };
 if (goog.DEBUG) {
   qs.core.modal.soyTemplateName = 'qs.core.modal';
@@ -197,7 +207,7 @@ if (goog.DEBUG) {
 
 
 qs.core.header = function(opt_data, opt_ignored) {
-  return soydata.VERY_UNSAFE.ordainSanitizedHtml('<nav class="navbar navbar-default navbar-fixed-top"><div class="container"><div class="qs-vertical-header-group qs-vertical-header-group-wide">' + qs.core.session_timers(null) + '</div><div class="qs-vertical-header-group qs-vertical-header-group-wide">' + qs.core.queue_progress_bar(null) + '</div><div class="qs-vertical-header-group"><div id="qs-header-username-label"></div><div class="btn-group"><button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" >Options<span class="caret"></span></button><ul class="dropdown-menu"><li><a data-toggle="modal" data-target="#qs-modal-login-dialog">Login</a></li><li><a id="qs-id-force-refetch">Force re-fetch</a></li><li><a data-toggle="modal" id="qs-id-logout">Log out</a></li></ul></div></div></div></nav>');
+  return soydata.VERY_UNSAFE.ordainSanitizedHtml('<nav class="navbar navbar-default navbar-fixed-top"><div class="container"><div class="qs-vertical-header-group qs-vertical-header-group-wide">' + qs.core.session_timers(null) + '</div><div class="qs-vertical-header-group qs-vertical-header-group-wide">' + qs.core.queue_progress_bar(null) + '</div><div class="qs-vertical-header-group"><div id="qs-header-username-label"></div><div class="btn-group"><button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" >Options<span class="caret"></span></button><ul class="dropdown-menu"><li><a data-toggle="modal" data-target="#qs-modal-login-dialog">Login</a></li><li><a id="qs-id-force-refetch">Force re-fetch</a></li><li><a data-toggle="modal" data-target="#qs-modal-new-question-dialog">New question</a></li><li><a data-toggle="modal" id="qs-id-logout">Log out</a></li></ul></div></div></div></nav>');
 };
 if (goog.DEBUG) {
   qs.core.header.soyTemplateName = 'qs.core.header';
@@ -219,7 +229,7 @@ if (goog.DEBUG) {
 
 
 qs.core.app = function(opt_data, opt_ignored) {
-  return soydata.VERY_UNSAFE.ordainSanitizedHtml(qs.core.login_dialog({id: 'login-dialog'}) + '<div id="qs-container">' + qs.core.header(null) + '<div id="qs-main"><div id="qs-messages"></div><div id="qs-main-widget"></div></div><div id="qs-footer"><div class="btn-group group-dropdown">' + qs.core.button({style: 'success', id: 'qs-id-submit-item-button', class: 'qs-footer-button', text: 'Submit'}) + qs.core.button({style: 'info', id: 'qs-id-edit-item-button', class: 'qs-footer-button', text: 'Edit'}) + qs.core.button({style: 'danger', id: 'qs-id-skip-item-button', class: 'qs-footer-button', text: 'Skip'}) + '</div></div></div>');
+  return soydata.VERY_UNSAFE.ordainSanitizedHtml(qs.core.login_dialog({id: 'login-dialog'}) + qs.core.new_question_dialog({id: 'new-question-dialog'}) + '<div id="qs-container">' + qs.core.header(null) + '<div id="qs-main"><div id="qs-messages"></div><div id="qs-main-widget"></div></div><div id="qs-footer"><div class="btn-group group-dropdown">' + qs.core.button({style: 'success', id: 'qs-id-submit-item-button', class: 'qs-footer-button', text: 'Submit'}) + qs.core.button({style: 'info', id: 'qs-id-edit-item-button', class: 'qs-footer-button', text: 'Edit'}) + qs.core.button({style: 'danger', id: 'qs-id-skip-item-button', class: 'qs-footer-button', text: 'Skip'}) + '</div></div></div>');
 };
 if (goog.DEBUG) {
   qs.core.app.soyTemplateName = 'qs.core.app';
