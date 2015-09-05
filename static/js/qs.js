@@ -219,7 +219,7 @@ $(function() {
 
   $("#qs-id-skip-item-button").click(function() {
     if (itemCallbacks) {
-      if (itemCallbacks.submitCallback()) {
+      if (itemCallbacks.skipCallback()) {
         statusbar.itemDone();
         $("#qs-main-widget").find(".panel").hide();
         loadNextItem();
