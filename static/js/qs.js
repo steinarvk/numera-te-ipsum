@@ -106,7 +106,7 @@ $(function() {
 
       $.ajax(url, {
           username: username,
-          password: password,
+          password: credentials.password,
           type: "POST",
       }).done(function() {
         console.log("successfully sent skip for q " + q.id);
