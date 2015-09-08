@@ -40,13 +40,17 @@ $(function() {
     }, 1000);
   }
 
-  function loadNextItem() {
-    var item = inbox.pop();
-
+  function dismissCurrentItem() {
     if (itemCallbacks) {
       itemCallbacks.dismiss();
     }
     itemCallbacks = null;
+  }
+
+  function loadNextItem() {
+    var item = inbox.pop();
+
+    dismissCurrentItem();
 
     if (!item) {
       showMessage({
@@ -295,5 +299,22 @@ $(function() {
       err("network error");
     });
 
+  });
+
+  $("#qs-id-experiment").click(function() {
+    dismissCurrentItem();
+
+    var gs = {
+      "event": "meditation",
+      "default_duration": "30",
+    };
+    if (Math.random() > 0.5) {
+      gs.t0 = moment().subtract(37, "hours").format();
+      gs.t1 = moment().subtract(3, "hours").format();
+    } else {
+      gs.t0 = moment().subtract(37, "seconds").format();
+    }
+    $("#qs-main").html(soy.renderAsElement(qs.core.event_panel, gs));
+    todoInitializeExperiment();
   });
 });

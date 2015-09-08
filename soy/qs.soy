@@ -33,6 +33,172 @@
   </div>
 {/template}
 
+/** An event-reporting panel. */
+{template .event_panel}
+  {@param event: string}
+  {@param t0: string}
+  {@param? t1: string}
+  {@param? default_duration: string}
+
+  {call .panel data="all"}
+    {param title: 'Report binary event' /}
+    {param content kind="html"}
+      <div>
+        Event:{sp}
+        <span class="qs-event-desc">{$event}</span>
+      </div>
+
+      <input type="hidden"
+             id="qs-event-t0"
+             value="{$t0}"/>
+      <input type="hidden"
+             id="qs-event-t1"
+             value="{$t1}"/>
+
+      <div>
+        Did this occur between:{sp}
+        <span class="qs-event-query-begin-time"></span>
+        {sp}and{sp}
+        <span class="qs-event-query-end-time"></span>,
+        a time span of{sp}
+        <span class="qs-event-query-time-duration"></span>
+        ?
+      </div>
+
+      <div class="btn-group qs-event-options"
+           data-toggle="buttons">
+        <label class="btn btn-primary">
+          <input type="radio"
+                 name="options"
+                 id="qs-event-yes-at"
+                 autocomplete="off">
+          Yes, at...
+        </label>
+        <label class="btn btn-primary">
+          <input type="radio"
+                 name="options"
+                 id="qs-event-unknown"
+                 autocomplete="off">
+          Unsure
+        </label>
+        <label class="btn btn-primary">
+          <input type="radio"
+                 name="options"
+                 id="qs-event-no"
+                 autocomplete="off">
+          No
+        </label>
+      </div>
+
+      {call .modal}
+        {param title: 'Select start time of event: ' + $event /}
+        {param id: 'event-datetimepicker' /}
+        {param close_button: true /}
+        {param content kind="html"}
+          <div class="qs-event-datetimepicker">
+          </div>
+        {/param}
+        {param footer_content kind="html"}
+          {call .button}
+            {param id: 'qs-event-accept-datetimepicker' /}
+            {param class: 'qs-event-accept-datetimepicker' /}
+            {param style: 'success' /}
+            {param text: 'Accept' /}
+          {/call}
+        {/param}
+      {/call}
+
+      <div style="display: none;" id="qs-event-yes-details">
+        From
+        <input type="hidden"
+               id="qs-event-start-datetime-hidden">
+        <button type="button"
+                id="qs-event-details-start-time"
+                class="btn btn-info"
+                data-toggle="modal"
+                data-target="#qs-modal-event-datetimepicker"
+        >&lt;time&gt;</button>
+        for <input size="3"
+                   type="text"
+                   id="qs-event-duration-mins"
+                   {if isNonnull($default_duration)}
+                    value="{$default_duration}"
+                   {/if}
+          > minutes
+        (until <span class="qs-event-end-time"></span>)
+      </div>
+      </div>
+    {/param}
+  {/call}
+
+  <script type="text/javascript">
+    {literal}
+    function todoInitializeExperiment() {
+      var t0 = moment($("#qs-event-t0").val()),
+          t1 = moment($("#qs-event-t1").val()),
+          fmt = "MMMM Do HH:mm";
+      $(".qs-event-datetimepicker").datetimepicker({
+        minuteStep: 5,
+        todayBtn: true,
+        linkField: "qs-event-start-datetime-hidden",
+        startDate: t0.toDate(),
+        endDate: t1.toDate(),
+      });
+      $(".qs-event-options").on("change", "input[type=radio]", function() {
+        $("#qs-event-yes-details").toggle("qs-event-yes-at" === $(this).attr("id"));
+      });
+      $("#qs-event-accept-datetimepicker").click(function() {
+        var x = moment($("#qs-event-start-datetime-hidden").val());
+        console.log("value string is: " + x);
+        $("#qs-event-details-start-time").html(x.format(fmt));
+        $("#qs-modal-event-datetimepicker").modal("hide");
+        updateEndDate();
+      });
+
+      function updateLabels() {
+        var rt1 = t1, age;
+
+        $(".qs-event-query-begin-time").html(t0.format(fmt));
+
+        if (t1.isValid()) {
+          $(".qs-event-query-end-time").html(t1.format(fmt));
+        } else {
+          rt1 = moment();
+          $(".qs-event-query-end-time").html("now");
+
+          setTimeout(updateLabels, 5000);
+        }
+
+        age = "around " + rt1.from(t0, true);
+        $(".qs-event-query-time-duration").html(age);
+      }
+
+      updateLabels();
+      
+      $("#qs-event-duration-mins").change(function() {
+        updateEndDate();
+      });
+      function updateEndDate() {
+        var m = parseInt($("#qs-event-duration-mins").val(), 10),
+            t0 = moment($("#qs-event-start-datetime-hidden").val()),
+            t1;
+
+        console.log("trying to update");
+        console.log(m);
+        
+        if (m > 0) {
+            t1 = t0.add(m, "minutes");
+            console.log(t1);
+            $(".qs-event-end-time").html(t1.format(fmt));
+        }
+
+      }
+    }
+    {/literal}
+    console.log("hello!");
+  </script>
+{/template}
+
 /** A question panel. */
 {template .question_panel}
   {@param text: string}
@@ -352,6 +518,11 @@
               <a data-toggle="modal"
                  id="qs-id-logout">
               Log out
+              </a>
+            </li>
+            <li>
+              <a id="qs-id-experiment">
+              Experiment!
               </a>
             </li>
           </ul>
