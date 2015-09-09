@@ -195,7 +195,8 @@ def get_pending(conn, user_id):
   if limit:
     rv["pending"] = rv["pending"][:limit]
   rv["pending"] = [v for (k,v) in rv["pending"]]
-  rv["first_trigger"] = qs2.qsjson.json_datetime(rv["first_trigger"])
+  if "first_trigger" in rv:
+    rv["first_trigger"] = qs2.qsjson.json_datetime(rv["first_trigger"])
   return rv
 
 if __name__ == '__main__':
