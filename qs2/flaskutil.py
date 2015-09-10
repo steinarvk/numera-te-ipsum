@@ -60,10 +60,12 @@ def user_page(app, engine, url, method, write=False):
           try:
             rv = f(conn=conn, *args, **kwargs)
           except (qs2.error.ValidationFailed, qs2.error.OperationFailed) as e:
-            return flask.jsonify(
+            response = flask.jsonify(
               status="error",
               reason=e.message,
             )
+            response.status_code = 500
+            return response
           if isinstance(rv, dict):
             if "status" not in rv:
               rv["status"] = "ok"

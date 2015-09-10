@@ -63,18 +63,134 @@ $(function() {
 
     itemCallbacks = {};
 
-    if (item.type !== "question") {
-      showMessage({
-        style: "danger",
-        header: "Not implemented yet!",
-        text: "Loaded unknown kind of item: " + item.type,
-      });
+    if (item.type === "question") {
+      currentItem = item;
+      presentQuestion(currentItem.question);
       return;
     }
 
-    currentItem = item;
+    if (item.type === "event" && item.subtype === "append") {
+      currentItem = item;
+      presentEvent(currentItem.event_append);
+      return;
+    }
 
-    presentQuestion(currentItem.question);
+    if (item.type === "event" && item.subtype === "correct") {
+      currentItem = item;
+      presentEvent(currentItem.event_correct);
+      return;
+    }
+
+    showMessage({
+      style: "danger",
+      header: "Not implemented yet!",
+      text: "Loaded unknown kind of item: " + item.type,
+    });
+  }
+
+  function presentEvent(ev, kind) {
+    var main = $("#qs-main-widget")[0],
+        username = credentials.username,
+        t0 = moment(),
+        args = {
+          "event": ev.name,
+          "default_duration": "30",
+          "t0": moment(ev.start).format(),
+        },
+        control;
+    
+    console.log(ev);
+
+    if (ev.end === "now") {
+      args.t1 = "now";
+    } else {
+      args.t1 = moment(ev.end).format();
+    }
+
+    soy.renderElement(
+      main,
+      qs.core.event_panel,
+      args
+    );
+
+    control = modules.eventreporting.init(main);
+
+    itemCallbacks.dismiss = function() {
+      control.die();
+      console.log("dismissed...");
+    }
+
+    itemCallbacks.skipCallback = function() {
+      showMessage({
+        style: "danger",
+        header: "Not implemented yet!",
+        text: "Skipping for event reporting isn't implemented yet. " +
+              "This is not a real skip, it'll come back when you reload.",
+      });
+      return true;
+    }
+
+    itemCallbacks.submitCallback = function() {
+      var result = control.result(),
+          reqdata = {};
+
+      console.log("submit value:");
+      console.log(result);
+
+      if (result === null) {
+        showMessage({
+          style: "danger",
+          header: "Oops.",
+          text: "Looks like you forgot to set a value before submitting!",
+        });
+        return false;
+      }
+
+      if (result.result === "yes") {
+        reqdata.state = "on";
+        reqdata.start = result.t0.format();
+        reqdata.end = result.t1.format();
+      } else if (result.result == "no") {
+        reqdata.state = "off";
+        reqdata.start = control.rangestart().format();
+        reqdata.end = control.rangeend().format();
+      } else if (result.result == "unknown") {
+        reqdata.state = "unknown";
+        reqdata.start = control.rangestart().format();
+        reqdata.end = control.rangeend().format();
+      } else {
+        showMessage({
+          style: "danger",
+          header: "Oops.",
+          text: "Internal error (unknown result: " + result.result + ")",
+        });
+        return false;
+      }
+
+      console.log("would submit");
+      console.log(reqdata);
+
+      var url = "/qs-api/u/" + username + "/events/" + ev.event_type_id + "/report";
+      $.ajax(url, {
+        username: username,
+        password: credentials.password,
+        type: "POST",
+        contentType: "application/json; charset: utf-8",
+        dataType: "json",
+        data: JSON.stringify(reqdata),
+      }).done(function() {
+        console.log("successfully sent report for " + url);
+      }).fail(function() {
+        console.log("failed sent report for " + url);
+        showMessage({
+          style: "danger",
+          header: "Error.",
+          text: "Failed to post report #" + ev.event_type_id,
+        });
+      });
+
+      return true;
+    }
   }
 
   function presentQuestion(q) {

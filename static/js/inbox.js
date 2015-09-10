@@ -22,6 +22,7 @@ modules.inbox = function(options) {
       password: options.credentials.password,
       data: {
         types: "question",
+//        types: "question,event",
       },
     }).done(onSuccess).fail(onFailure);
   }

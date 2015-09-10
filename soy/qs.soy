@@ -37,6 +37,7 @@
 {template .event_panel}
   {@param event: string}
   {@param t0: string}
+  {@param? kind: string}
   {@param? t1: string}
   {@param? default_duration: string}
 
@@ -49,11 +50,14 @@
       </div>
 
       <input type="hidden"
-             id="qs-event-t0"
+             class="qs-event-t0"
              value="{$t0}"/>
       <input type="hidden"
-             id="qs-event-t1"
+             class="qs-event-t1"
              value="{$t1}"/>
+      <input type="hidden"
+             class="qs-event-kind"
+             value="{$kind}"/>
 
       <div>
         Did this occur between:{sp}
@@ -70,21 +74,21 @@
         <label class="btn btn-primary">
           <input type="radio"
                  name="options"
-                 id="qs-event-yes-at"
+                 class="qs-event-yes-at"
                  autocomplete="off">
           Yes, at...
         </label>
         <label class="btn btn-primary">
           <input type="radio"
                  name="options"
-                 id="qs-event-unknown"
+                 class="qs-event-unknown"
                  autocomplete="off">
           Unsure
         </label>
         <label class="btn btn-primary">
           <input type="radio"
                  name="options"
-                 id="qs-event-no"
+                 class="qs-event-no"
                  autocomplete="off">
           No
         </label>
@@ -108,19 +112,18 @@
         {/param}
       {/call}
 
-      <div style="display: none;" id="qs-event-yes-details">
+      <div style="display: none;" class="qs-event-yes-details">
         From
         <input type="hidden"
                id="qs-event-start-datetime-hidden">
         <button type="button"
-                id="qs-event-details-start-time"
-                class="btn btn-info"
+                class="btn btn-info qs-event-details-start-time"
                 data-toggle="modal"
                 data-target="#qs-modal-event-datetimepicker"
         >&lt;time&gt;</button>
         for <input size="3"
                    type="text"
-                   id="qs-event-duration-mins"
+                   class="qs-event-duration-mins"
                    {if isNonnull($default_duration)}
                     value="{$default_duration}"
                    {/if}
@@ -130,73 +133,6 @@
       </div>
     {/param}
   {/call}
-
-  <script type="text/javascript">
-    {literal}
-    function todoInitializeExperiment() {
-      var t0 = moment($("#qs-event-t0").val()),
-          t1 = moment($("#qs-event-t1").val()),
-          fmt = "MMMM Do HH:mm";
-      $(".qs-event-datetimepicker").datetimepicker({
-        minuteStep: 5,
-        todayBtn: true,
-        linkField: "qs-event-start-datetime-hidden",
-        startDate: t0.toDate(),
-        endDate: t1.toDate(),
-      });
-      $(".qs-event-options").on("change", "input[type=radio]", function() {
-        $("#qs-event-yes-details").toggle("qs-event-yes-at" === $(this).attr("id"));
-      });
-      $("#qs-event-accept-datetimepicker").click(function() {
-        var x = moment($("#qs-event-start-datetime-hidden").val());
-        console.log("value string is: " + x);
-        $("#qs-event-details-start-time").html(x.format(fmt));
-        $("#qs-modal-event-datetimepicker").modal("hide");
-        updateEndDate();
-      });
-
-      function updateLabels() {
-        var rt1 = t1, age;
-
-        $(".qs-event-query-begin-time").html(t0.format(fmt));
-
-        if (t1.isValid()) {
-          $(".qs-event-query-end-time").html(t1.format(fmt));
-        } else {
-          rt1 = moment();
-          $(".qs-event-query-end-time").html("now");
-
-          setTimeout(updateLabels, 5000);
-        }
-
-        age = "around " + rt1.from(t0, true);
-        $(".qs-event-query-time-duration").html(age);
-      }
-
-      updateLabels();
-      
-      $("#qs-event-duration-mins").change(function() {
-        updateEndDate();
-      });
-      function updateEndDate() {
-        var m = parseInt($("#qs-event-duration-mins").val(), 10),
-            t0 = moment($("#qs-event-start-datetime-hidden").val()),
-            t1;
-
-        console.log("trying to update");
-        console.log(m);
-        
-        if (m > 0) {
-            t1 = t0.add(m, "minutes");
-            console.log(t1);
-            $(".qs-event-end-time").html(t1.format(fmt));
-        }
-
-      }
-    }
-    {/literal}
-    console.log("hello!");
-  </script>
 {/template}
 
 /** A question panel. */

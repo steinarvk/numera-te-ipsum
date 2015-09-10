@@ -484,20 +484,26 @@ def post_event_report(conn, user_id, event_type, start, end, state, req_id):
   # query to see:
   #  - whether there is an interval between [last_end, start]
   #  - whether start < last_end (reject)
+  logging.info("posting %s for event #%d", state, event_type.evt_id)
   if end < start:
     raise ValidationFailed("event ends before it starts")
   if state not in ("on", "off", "unknown"):
     raise ValidationFailed("invalid state: {}".format(state))
   tail = fetch_event_report_tail(conn, user_id, event_type)
+  logging.info("tail for event #%d reported as: %s", event_type.evt_id, tail)
+  logging.info("start was: %s", start)
   if start < tail:
+    logging.info("start was before tail, trying to correct")
     try:
       return try_correct_event_report(conn, user_id,
         event_type, start, end, state, req_id)
     except OperationFailed as e:
+      logging.info("failed to correct, denying retroactive change")
       message = "retroactive change to event record, invalid update: " + e.message
       raise OperationFailed(message)
   rv = {}
   if tail < start:
+    logging.info("tail was before start, appending extra")
     evr_id_gap = append_to_event_record(conn, event_type,
       start=tail, end=start, state="unreported", req_id=req_id)
     rv["missing_report"] = {
