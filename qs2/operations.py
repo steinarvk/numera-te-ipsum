@@ -15,7 +15,7 @@ import json
 from qs2 import ui
 import qs2.csvexport
 
-from qs2.timeutil import hacky_force_timezone
+from qs2.timeutil import (hacky_force_timezone, truncate_to_second_resolution)
 
 from sqlalchemy import sql
 
@@ -438,9 +438,10 @@ def fetch_event_report_tail(conn, user_id, event_type):
     ).order_by(qs2.model.event_record.c.end.desc()).limit(1)
   results = sql_op(conn, "fetch tail of event record", query).fetchall()
   if results:
-    return hacky_force_timezone(results[0].end)
+    rv = hacky_force_timezone(results[0].end)
   else:
-    return hacky_force_timezone(event_type.timestamp)
+    rv = hacky_force_timezone(event_type.timestamp)
+  return truncate_to_second_resolution(rv)
 
 def append_to_event_record(conn, event_type, start, end, state, req_id):
   query = qs2.model.event_record.insert().values(
