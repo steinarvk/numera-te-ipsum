@@ -216,7 +216,64 @@
   </button>
 {/template}
 
+/** New event dialog. */
+{template .new_event_dialog}
+  {@param id: string}
 
+  {call .modal}
+    {param title: 'Add new event' /}
+    {param id: $id /}
+    {param close_button: true /}
+    {param content kind="html"}
+      <table>
+        <tr>
+          <td>Event name (short):
+          <td><input type="text" id="{$id}-event-name" />
+        <tr>
+          <td>Track duration?
+          <td>
+            <div class="btn-group qs-event-options"
+                 id="{$id}-event-track-duration"
+                 data-toggle="buttons">
+              <label class="btn btn-primary">
+                <input type="radio"
+                       name="yes"
+                       autocomplete="off">
+                Yes
+              </label>
+              <label class="btn btn-primary">
+                <input type="radio"
+                       name="yes"
+                       autocomplete="off">
+                No
+              </label>
+            </div>
+        <tr>
+          <td>Polling frequency:
+          <td>
+            <select id="{$id}-frequency">
+              <option value="3600">Every hour</option>
+              <option value="7200">Every two hours</option>
+              <option value="14400">Every four hours</option>
+              <option value="28800">Every eight hours</option>
+              <option value="86400">Every day</option>
+              <option value="172800">Every other day</option>
+              <option value="604800">Every week</option>
+              <option value="1209600">Every other week</option>
+              <option value="2592000">Every month</option>
+            </select>
+      </table>
+    {/param}
+    {param footer_content kind="html"}
+      {call .button}
+        {param id: $id + '-submit' /}
+        {param class: 'qs-submit-new-question' /}
+        {param style: 'success' /}
+        {param text: 'Submit' /}
+      {/call}
+    {/param}
+  {/call}
+{/template}
 
 /** New question dialog. */
 {template .new_question_dialog}
@@ -452,6 +509,12 @@
             </li>
             <li>
               <a data-toggle="modal"
+                 data-target="#qs-modal-new-event-dialog">
+              New event
+              </a>
+            </li>
+            <li>
+              <a data-toggle="modal"
                  id="qs-id-logout">
               Log out
               </a>
@@ -506,6 +569,10 @@
 
   {call .new_question_dialog}
     {param id: 'new-question-dialog' /}
+  {/call}
+
+  {call .new_event_dialog}
+    {param id: 'new-event-dialog' /}
   {/call}
 
   <div id="qs-container">

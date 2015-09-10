@@ -357,6 +357,62 @@ $(function() {
     }
   });
 
+  $("#new-event-dialog-submit").click(function() {
+    var data = {trigger: {}},
+        root = $("#qs-modal-new-event-dialog").modal("hide"),
+        checked;
+
+    function goodbye(msg) {
+      showMessage(msg);
+      root.modal("hide");
+    }
+
+    function err(reason) {
+      goodbye({
+        style: "danger",
+        header: "Error adding new event.",
+        text: reason,
+      });
+    }
+
+    data.name = root.find("#new-event-dialog-event-name").val();
+    if (data.name.length < 1) {
+      return err("event name is required");
+    }
+
+    checked = root.find("#new-event-dialog-event-track-duration").find("input:checked");
+    if (checked.length !== 1) {
+      return err("whether or not to track duration must be selected");
+    }
+    if (checked[0].name !== "yes" && checked[0].name !== "no") {
+      return err("not a valid selection for whether or not to track duration");
+    }
+    data.use_duration = checked[0].name === "yes";
+
+    data.trigger.delay_s = parseInt(
+      root.find("#new-event-dialog-frequency").val(), 10);
+    if (typeof data.trigger.delay_s !== "number" || !(data.trigger.delay_s > 0)) {
+      return err("valid frequency is required");
+    }
+
+    $.ajax("/qs-api/u/" + credentials.username + "/events", {
+        username: credentials.username,
+        password: credentials.password,
+        type: "POST",
+        contentType: "application/json; charset: utf-8",
+        dataType: "json",
+        data: JSON.stringify(data),
+    }).done(function() {
+      goodbye({
+        style: "info",
+        header: "Success!",
+        text: "Added a new event ('" + data.name + "')",
+      });
+    }).fail(function() {
+      err("network or server-side error adding event");
+    });
+  });
+
   $("#new-question-dialog-submit").click(function() {
     var data = {};
 
