@@ -514,6 +514,7 @@ def post_event_report(conn, user_id, event_type, start, end, state, req_id):
     }
   rv["event_report_id"] = append_to_event_record(conn, event_type,
     start=start, end=end, state=state, req_id=req_id)
+  reset_trigger(conn, event_type.trigger_id)
   return rv
 
 def post_answer(conn, user_id, question_id, value,
