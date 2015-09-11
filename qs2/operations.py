@@ -260,6 +260,7 @@ def get_pending_event_append(conn, user_id, event_type):
     "event_append": {
       "event_type_id": event_type.evt_id,
       "name": event_type.name,
+      "use_duration": event_type.use_duration,
       "start": qs2.qsjson.json_string_datetime(tail),
       "end": "now",
     },

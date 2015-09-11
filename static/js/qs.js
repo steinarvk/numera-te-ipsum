@@ -101,6 +101,7 @@ $(function() {
         t0 = moment(),
         args = {
           "event": ev.name,
+          "instant": !ev.use_duration,
           "default_duration": "30",
           "t0": moment(ev.start).format(),
         },

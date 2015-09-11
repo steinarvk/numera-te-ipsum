@@ -70,6 +70,7 @@
 {template .event_panel}
   {@param event: string}
   {@param t0: string}
+  {@param? instant: bool}
   {@param? kind: string}
   {@param? t1: string}
   {@param? default_duration: string}
@@ -128,7 +129,13 @@
       </div>
 
       {call .modal}
-        {param title: 'Select start time of event: ' + $event /}
+        {param title kind="text"}
+          {if $instant}
+            Select time of event: {$event}
+          {else}
+            Select start time of event: {$event}
+          {/if}
+        {/param}
         {param id: 'event-datetimepicker' /}
         {param close_button: true /}
         {param content kind="html"}
@@ -146,22 +153,36 @@
       {/call}
 
       <div style="display: none;" class="qs-event-yes-details">
-        From
-        <input type="hidden"
-               id="qs-event-start-datetime-hidden">
-        <button type="button"
-                class="btn btn-info qs-event-details-start-time"
-                data-toggle="modal"
-                data-target="#qs-modal-event-datetimepicker"
-        >&lt;time&gt;</button>
-        for <input size="3"
-                   type="text"
-                   class="qs-event-duration-mins"
-                   {if isNonnull($default_duration)}
-                    value="{$default_duration}"
-                   {/if}
-          > minutes
-        (until <span class="qs-event-end-time"></span>)
+        {if $instant}
+          <input type="hidden"
+                 id="qs-event-start-datetime-hidden">
+          At 
+          <button type="button"
+                  class="btn btn-info qs-event-details-start-time"
+                  data-toggle="modal"
+                  data-target="#qs-modal-event-datetimepicker"
+          >&lt;time&gt;</button>
+
+          <input type="hidden" class="qs-event-duration-mins">
+          <input type="hidden" class="qs-event-end-time">
+        {else}
+          From
+          <input type="hidden"
+                 id="qs-event-start-datetime-hidden">
+          <button type="button"
+                  class="btn btn-info qs-event-details-start-time"
+                  data-toggle="modal"
+                  data-target="#qs-modal-event-datetimepicker"
+          >&lt;time&gt;</button>
+          for <input size="3"
+                     type="text"
+                     class="qs-event-duration-mins"
+                     {if isNonnull($default_duration)}
+                      value="{$default_duration}"
+                     {/if}
+            > minutes
+          (until <span class="qs-event-end-time"></span>)
+        {/if}
       </div>
       </div>
     {/param}
