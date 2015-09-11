@@ -121,3 +121,9 @@ html, body {
 .qs-vertical-header-group-wide {
   width: 30%;
 }
+
+.qs-scrollable-area {
+  height: auto;
+  overflow-x: hidden;
+  max-height: 300px;
+}

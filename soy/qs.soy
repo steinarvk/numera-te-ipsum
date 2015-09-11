@@ -33,6 +33,39 @@
   </div>
 {/template}
 
+/** A whole bunch of buttons with associated data. */
+{template .button_cloud}
+  {@param button_class: string}
+  {@param buttons: list<[text: string, data: string]>}
+
+  <div class="qs-button-cloud">
+    {foreach $b in $buttons}
+      {call .button}
+        {param text: $b.text /}
+        {param class: $button_class /}
+        {param button_data: $b.data /}
+      {/call}
+    {/foreach}
+  </div>
+{/template}
+
+/** A scrollable list modal. */
+{template .scrollable_list_modal}
+  {@param title: string}
+  {@param id: string}
+  {@param content: html}
+
+  {call .modal}
+    {param title: $title /}
+    {param id: $id /}
+    {param content kind="html"}
+      <div class="qs-scrollable-area">
+        {$content}
+      </div>
+    {/param}
+  {/call}
+{/template}
+
 /** An event-reporting panel. */
 {template .event_panel}
   {@param event: string}
@@ -183,10 +216,14 @@
   {@param? style: string}
   {@param? id: string}
   {@param? show_modal: string}
+  {@param? button_data: string}
   {@param? dismiss: bool}
   {@param? class: string}
   
   <button type="button"
+          {if isNonnull($button_data)}
+            data-button-data="{$button_data}"
+          {/if}
           class="btn
                  btn-
                  {if isNonnull($style)}
@@ -520,8 +557,8 @@
               </a>
             </li>
             <li>
-              <a id="qs-id-experiment">
-              Experiment!
+              <a id="qs-id-report-an-event">
+              Report an event
               </a>
             </li>
           </ul>
@@ -573,6 +610,30 @@
 
   {call .new_event_dialog}
     {param id: 'new-event-dialog' /}
+  {/call}
+
+  {call .scrollable_list_modal}
+    {param title: 'Select an event' /}
+    {param id: 'select-an-event-dialog' /}
+    {param content kind="html"}
+      {for $i in range(300)}
+        {call .button}
+          {param text kind="text"}
+            Hello {$i}
+          {/param}
+        {/call}
+        {call .button}
+          {param text kind="text"}
+            Loremipsum yes {$i}
+          {/param}
+        {/call}
+        {call .button}
+          {param text kind="text"}
+            Cute Italian yes {$i}
+          {/param}
+        {/call}
+      {/for}
+    {/param}
   {/call}
 
   <div id="qs-container">

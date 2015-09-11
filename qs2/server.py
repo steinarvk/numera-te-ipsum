@@ -85,6 +85,16 @@ def get_event_tail(conn, user_id, evt_id):
       ),
     }
 
+@user_page("events/<int:evt_id>/report", "GET")
+def get_event_report(conn, user_id, evt_id):
+  with conn.begin() as trans:
+    event_type = qs2.operations.fetch_event_type(conn, user_id, evt_id)
+    if not event_type:
+      return oops("no such event")
+    return {
+      "report": qs2.operations.get_pending_event_append(conn, user_id, event_type),
+    }
+
 @user_page("events/<int:evt_id>/report", "POST", write=True)
 def post_event_report(conn, user_id, evt_id, data, req_id):
   with conn.begin() as trans:

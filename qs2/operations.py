@@ -251,6 +251,20 @@ def make_trigger_conditions(conn, user_id, force):
     condition = base_condition & (model.triggers.c.next_trigger < now)
   return condition, base_condition
 
+def get_pending_event_append(conn, user_id, event_type):
+  # TODO, this is horrible, optimize query! (written very late at night)
+  tail = fetch_event_report_tail(conn, user_id, event_type)
+  return {
+    "type": "event",
+    "subtype": "append",
+    "event_append": {
+      "event_type_id": event_type.evt_id,
+      "name": event_type.name,
+      "start": qs2.qsjson.json_string_datetime(tail),
+      "end": "now",
+    },
+  }
+
 def get_pending_events_appends(conn, user_id, force=False, limit=None):
   columns = [model.event_types] + _implicit_trigger_columns
   joined = model.triggers.join(model.event_types)
@@ -260,18 +274,7 @@ def get_pending_events_appends(conn, user_id, force=False, limit=None):
   results = sql_op(conn, "fetch pending events", query)
   rv = []
   for row in results:
-    # TODO, this is horrible, optimize query! (written very late at night)
-    tail = fetch_event_report_tail(conn, user_id, row)
-    rv.append((row.next_trigger, {
-      "type": "event",
-      "subtype": "append",
-      "event_append": {
-        "event_type_id": row.evt_id,
-        "name": row.name,
-        "start": qs2.qsjson.json_string_datetime(tail),
-        "end": "now",
-      },
-    }))
+    rv.append((row.next_trigger, get_pending_event_append(conn, user_id, row)))
   count = 0 # TODO
   earliest = None # TODO
   return rv, count, earliest

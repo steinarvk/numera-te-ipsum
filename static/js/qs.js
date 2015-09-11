@@ -1,5 +1,6 @@
 $(function() {
-  $(document.body).append(soy.renderAsElement(qs.core.app));
+  var body = $(document.body);
+  body.append(soy.renderAsElement(qs.core.app));
 
   var statusbar = modules.statusbar({});
   var credentials = modules.login({hook: onLoggedIn});
@@ -61,6 +62,12 @@ $(function() {
       return;
     }
 
+    presentItem(item);
+  }
+
+  function presentItem(item) {
+    dismissCurrentItem();
+    
     itemCallbacks = {};
 
     if (item.type === "question") {
@@ -473,20 +480,68 @@ $(function() {
 
   });
 
-  $("#qs-id-experiment").click(function() {
-    dismissCurrentItem();
+  function get(url, args) {
+    args = args || {};
+    args.username = credentials.username;
+    args.password = credentials.password;
+    return $.ajax(url, args).fail(function() {
+      showMessage({
+        style: "danger",
+        header: "Error.",
+        text: "Network request failed!",
+      });
+    });
+  }
 
-    var gs = {
-      "event": "meditation",
-      "default_duration": "30",
-    };
-    if (Math.random() > 0.5) {
-      gs.t0 = moment().subtract(37, "hours").format();
-      gs.t1 = moment().subtract(3, "hours").format();
-    } else {
-      gs.t0 = moment().subtract(37, "seconds").format();
-    }
-    $("#qs-main").html(soy.renderAsElement(qs.core.event_panel, gs));
-    todoInitializeExperiment();
+  body.on("click", ".qs-select-report-event", function() {
+    var url = $(this).attr("data-button-data");
+
+    console.log("selected report event: " + url);
+    
+    $("#qs-modal-select-an-event-dialog").modal("hide");
+
+    get(url).done(function(data) {
+      console.log("successful get");
+      console.log(data);
+      presentItem(data.report);
+    });
+  });
+
+  $("#qs-id-report-an-event").click(function() {
+    var d = $("#qs-modal-select-an-event-dialog"),
+        fetchUrl = "/qs-api/u/" + credentials.username + "/events";
+
+    $.ajax(fetchUrl, {
+      username: credentials.username,
+      password: credentials.password,
+    }).fail(function() {
+      showMessage({
+        style: "danger",
+        header: "Error.",
+        text: "Failed to fetch events from server.",
+      });
+    }).done(function(data) {
+      var i = 0, buttons = [];
+
+      while (i < data.events.length) {
+        buttons.push({
+          text: data.events[i].name,
+          data: fetchUrl + "/" + data.events[i].id + "/report",
+        });
+
+        i++;
+      }
+
+      soy.renderElement(
+        d.find(".qs-scrollable-area")[0],
+        qs.core.button_cloud,
+        {
+          button_class: "qs-select-report-event",
+          buttons: buttons,
+        }
+      );
+
+      d.modal("show");
+    });
   });
 });
