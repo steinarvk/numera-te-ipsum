@@ -21,6 +21,7 @@ import operator
 import datetime
 
 config = qs2.configutil.Config(os.environ["QS_CONFIG_FILE"])
+qs2.logutil._config = config
 qs2.logutil.setup_logging(filename=config["logging.filename"],
                           level=config.get("logging.level", "info"))
 app = Flask("qs2")

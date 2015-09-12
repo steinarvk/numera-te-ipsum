@@ -29,7 +29,7 @@ class DbFetch(object):
 
 
 def sql_op(conn, name, query):
-  with qs2.logutil.lowlevel_section("SQL operation ({})".format(name)):
+  with qs2.logutil.section("SQL operation ({})".format(name)):
     logging.debug("Executing SQL query: %s", str(query))
     try:
       result = conn.execute(query)
@@ -214,6 +214,7 @@ def get_all_questions(conn, user_id):
     ).order_by(model.survey_questions.c.timestamp.asc())
   return map(dict, sql_op(conn, "fetch questions", query).fetchall())
 
+@qs2.logutil.profiled("get_pending_corrections")
 def get_pending_events_corrections(conn, user_id, limit=None):
   query = sql.select([model.event_record]).where(
     (model.event_record.c.user_id_owner == user_id) &
@@ -251,6 +252,7 @@ def make_trigger_conditions(conn, user_id, force):
     condition = base_condition & (model.triggers.c.next_trigger < now)
   return condition, base_condition
 
+@qs2.logutil.profiled("get_pending_append")
 def get_pending_event_append(conn, user_id, event_type):
   # TODO, this is horrible, optimize query! (written very late at night)
   tail = fetch_event_report_tail(conn, user_id, event_type)
@@ -266,6 +268,7 @@ def get_pending_event_append(conn, user_id, event_type):
     },
   }
 
+@qs2.logutil.profiled("get_pending_appends")
 def get_pending_events_appends(conn, user_id, force=False, limit=None):
   columns = [model.event_types] + _implicit_trigger_columns
   joined = model.triggers.join(model.event_types)
@@ -280,6 +283,7 @@ def get_pending_events_appends(conn, user_id, force=False, limit=None):
   earliest = None # TODO
   return rv, count, earliest
 
+@qs2.logutil.profiled("get_pending_events")
 def get_pending_events(conn, user_id, force=False, limit=None):
   crv, cc, cea = get_pending_events_corrections(conn, user_id, limit=limit)
   prv, pc, pea = get_pending_events_appends(conn, user_id, force=force, limit=limit)
@@ -289,6 +293,7 @@ def get_pending_events(conn, user_id, force=False, limit=None):
       earliest = pea
   return crv + prv, cc + pc, earliest
 
+@qs2.logutil.profiled("get_pending_questions")
 def get_pending_questions(conn, user_id, columns=[], force=False, limit=None):
   if not columns:
     columns = [model.survey_questions] + _implicit_trigger_columns

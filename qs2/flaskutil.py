@@ -5,10 +5,12 @@ import logging
 
 import qs2.operations
 import qs2.error
+import qs2.logutil
 
 class AccessDenied(Exception):
   pass
 
+@qs2.logutil.profiled("auth_user")
 def auth_user(conn):
   auth = request.authorization
   if not auth:
@@ -17,6 +19,7 @@ def auth_user(conn):
                                           auth.username,
                                           auth.password)
 
+@qs2.logutil.profiled("check_user")
 def check_user(conn, login_id, username):
   try:
     user_id = qs2.operations.get_user_id(conn, username)
@@ -30,6 +33,7 @@ def check_user(conn, login_id, username):
 def user_page(app, engine, url, method, write=False):
   def wrap(f):
     @app.route("/u/<username>/" + url, methods=[method])
+    @qs2.logutil.profiled(method + ":/u/<username>/" + url)
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
       username = kwargs["username"]
