@@ -49,8 +49,8 @@
   </div>
 {/template}
 
-/** A scrollable list modal. */
-{template .scrollable_list_modal}
+/** A scrollable area modal. */
+{template .scrollable_area_modal}
   {@param title: string}
   {@param id: string}
   {@param content: html}
@@ -572,14 +572,21 @@
               </a>
             </li>
             <li>
+              <a id="qs-id-report-an-event">
+              Report an event
+              </a>
+            </li>
+            <li>&nbsp;</li>
+            <li>
               <a data-toggle="modal"
                  id="qs-id-logout">
               Log out
               </a>
             </li>
             <li>
-              <a id="qs-id-report-an-event">
-              Report an event
+              <a data-toggle="modal"
+                 data-target="#qs-modal-credits-dialog">
+              Credits
               </a>
             </li>
           </ul>
@@ -619,6 +626,82 @@
   </div>
 {/template}
 
+/** Credits dialog. */
+{template .credits_dialog}
+  {call .scrollable_area_modal}
+    {param title: 'Credits' /}
+    {param id: 'credits-dialog' /}
+    {param content kind="html"}
+      <p>
+      This app was written by Steinar V. Kaldager, mostly for his own personal use.
+      </p>
+
+      <hr/>
+
+      <p>
+        The app incorporates open-source code from numerous other authors.
+        Naturally these authors aren't endorsing or maintaining this app
+        in any way, but the software they wrote has been helpful and I'm
+        thankful that they've licensed it permissively.
+      </p>
+
+      <table>
+        <tr>
+          <td>Name
+          <td>Authors
+          <td>License
+        <tr>
+          <td><a href="https://getbootstrap.com">Bootstrap</a>
+          <td><a href="https://twitter.com/mdo">@mdo</a>,
+              <a href="https://twitter.com/fat">@fat</a>
+          <td>MIT
+        <tr>
+          <td><a href="https://getbootstrap.com">Google Closure Library</a>
+          <td>Google
+          <td>Apache 2.0
+        <tr>
+          <td><a href="https://getbootstrap.com">Google Closure Templates</a>
+          <td>Google
+          <td>Apache 2.0
+        <tr>
+          <td><a href="http://hammerjs.github.io">hammer.js</a>
+          <td>Jorik Tangelder
+          <td>MIT
+        <tr>
+          <td><a href="http://momentjs.com">moment.js</a>
+          <td>Tim Wood, Iskren Chernev, Moment.js contributors
+          <td>MIT
+        <tr>
+          <td><a href="http://underscorejs.org">underscore.js</a>
+          <td>Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+          <td>MIT
+        <tr>
+          <td><a href="http://jquery.com">jQuery</a>
+          <td>jQuery Foundation, Inc.
+          <td>MIT
+        <tr>
+          <td><a href="http://www.malot.fr/bootstrap-datetimepicker/">bootstrap-datetimepicker</a>
+          <td>Sebastien Malot
+          <td>Apache 2.0
+        <tr>
+          <td><a href="http://brianreavis.github.io/selectize.js/">selectize.js</a>
+          <td><a href="https://twitter.com/brianreavis">Brian Reavis</a>
+          <td>Apache 2.0
+        <tr>
+          <td><a href="http://modernizr.com">Modernizr</a>
+          <td><a href="https://twitter.com/KuraFire">Faruk Ateş</a>,
+              <a href="https://twitter.com/paul_irish">Paul Irish</a>,
+              <a href="https://twitter.com/SlexAxton">Alex Sexton</a>,
+              <a href="https://twitter.com/ryanseddon">Ryan Seddon</a>,
+              <a href="https://twitter.com/patrickkettner">Patrick Kettner</a>,
+              <a href="https://twitter.com/stucoxmedia">Stu Cox</a>,
+              <a href="https://twitter.com/doctyper">Richard Herrera</a>
+          <td>MIT & BSD
+      </table>
+    {/param}
+  {/call}
+{/template}
+
 /** Core application */
 {template .app}
   {call .login_dialog}
@@ -633,7 +716,9 @@
     {param id: 'new-event-dialog' /}
   {/call}
 
-  {call .scrollable_list_modal}
+  {call .credits_dialog /}
+
+  {call .scrollable_area_modal}
     {param title: 'Select an event' /}
     {param id: 'select-an-event-dialog' /}
     {param content kind="html"}
