@@ -111,6 +111,7 @@ def post_event_report(conn, user_id, evt_id, data, req_id):
       end=end,
       state=data["state"],
       req_id=req_id,
+      comment=data.get("comment"),
     )
     def transform(d, k, f):
       d[k] = f(d[k])

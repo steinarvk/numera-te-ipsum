@@ -158,6 +158,10 @@ $(function() {
         reqdata.state = "on";
         reqdata.start = result.t0.format();
         reqdata.end = result.t1.format();
+
+        if (result.comment !== null) {
+          reqdata.comment = result.comment;
+        }
       } else if (result.result == "no") {
         reqdata.state = "off";
         reqdata.start = control.rangestart().format();

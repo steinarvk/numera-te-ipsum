@@ -452,7 +452,7 @@ def fetch_event_report_tail(conn, user_id, event_type):
     rv = hacky_force_timezone(event_type.timestamp)
   return truncate_to_second_resolution(rv)
 
-def append_to_event_record(conn, event_type, start, end, state, req_id):
+def append_to_event_record(conn, event_type, start, end, state, req_id, comment=None):
   query = qs2.model.event_record.insert().values(
     req_id_creator=req_id,
     user_id_owner=event_type.user_id_owner,
@@ -460,6 +460,7 @@ def append_to_event_record(conn, event_type, start, end, state, req_id):
     status=state,
     start=start,
     end=end,
+    comment=comment,
   )
   (evr_id,) = sql_op(conn, "append to event record", query).inserted_primary_key
   return evr_id
@@ -490,7 +491,7 @@ def try_correct_event_report(conn, user_id, event_type, start, end, state, req_i
   sql_op(conn, "updating old event record", query)
   return { "corrected_event_record_id": evr_id }
 
-def post_event_report(conn, user_id, event_type, start, end, state, req_id):
+def post_event_report(conn, user_id, event_type, start, end, state, req_id, comment=None):
   # query to see:
   #  - whether there is an interval between [last_end, start]
   #  - whether start < last_end (reject)
@@ -503,6 +504,8 @@ def post_event_report(conn, user_id, event_type, start, end, state, req_id):
   logging.info("tail for event #%d reported as: %s", event_type.evt_id, tail)
   logging.info("start was: %s", start)
   if start < tail:
+    if comment is not None:
+      raise ValidationFailed("did not expect comment on correction")
     logging.info("start was before tail, trying to correct")
     try:
       return try_correct_event_report(conn, user_id,
@@ -522,7 +525,7 @@ def post_event_report(conn, user_id, event_type, start, end, state, req_id):
       "event_report_id": evr_id_gap,
     }
   rv["event_report_id"] = append_to_event_record(conn, event_type,
-    start=start, end=end, state=state, req_id=req_id)
+    start=start, end=end, state=state, req_id=req_id, comment=comment)
   reset_trigger(conn, event_type.trigger_id)
   return rv
 

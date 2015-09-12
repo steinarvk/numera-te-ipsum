@@ -67,6 +67,15 @@ modules.eventreporting = (function() {
       updateChosenRange();
     });
 
+    function getComment() {
+      var s = root.find(".qs-event-comment").val().trim();
+      if (s.length > 0) {
+        return s;
+      }
+
+      return null;
+    }
+
     function updateChosenRange() {
       console.log("updating chosen range");
 
@@ -84,6 +93,7 @@ modules.eventreporting = (function() {
           "duration_minutes": 0,
           "t0": t0,
           "t1": t0,
+          "comment": getComment(),
         };
       } else if (m > 0) {
         t1 = moment(t0).add(m, "minutes");
@@ -95,6 +105,7 @@ modules.eventreporting = (function() {
           "t0": t0,
           "duration_minutes": m,
           "t1": t1,
+          "comment": getComment(),
         };
       }
     }

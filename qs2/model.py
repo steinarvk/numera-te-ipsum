@@ -85,4 +85,5 @@ event_record = Table("event_record", metadata,
     nullable=False, index=True),
   Column("start", DateTimeTz, nullable=False, index=True),
   Column("end", DateTimeTz, nullable=False, index=True),
+  Column("comment", String),
 )
