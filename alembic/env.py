@@ -46,6 +46,7 @@ def run_migrations_offline():
     """
     url = get_database_credentials_url()
     context.configure(
+        compare_type=True,
         url=url, target_metadata=target_metadata, literal_binds=True)
 
     with context.begin_transaction():
@@ -64,6 +65,7 @@ def run_migrations_online():
 
     with connectable.connect() as connection:
         context.configure(
+            compare_type=True,
             connection=connection,
             target_metadata=target_metadata
         )
