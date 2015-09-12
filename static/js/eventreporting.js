@@ -77,18 +77,26 @@ modules.eventreporting = (function() {
       console.log("trying to update");
       console.log(m);
       
-      if (m > 0) {
-          t1 = moment(t0).add(m, "minutes");
-          console.log(t1);
-          $(".qs-event-end-time").html(t1.format(fmt));
-      }
+      if (root.find(".qs-event-is-instant").val() === "yes") {
+        currentResult = {
+          "result": "yes",
+          "instant": "yes",
+          "duration_minutes": 0,
+          "t0": t0,
+          "t1": t0,
+        };
+      } else if (m > 0) {
+        t1 = moment(t0).add(m, "minutes");
+        console.log(t1);
+        $(".qs-event-end-time").html(t1.format(fmt));
 
-      currentResult = {
-        "result": "yes",
-        "t0": t0,
-        "duration_minutes": m,
-        "t1": t1,
-      };
+        currentResult = {
+          "result": "yes",
+          "t0": t0,
+          "duration_minutes": m,
+          "t1": t1,
+        };
+      }
     }
 
     function die() {

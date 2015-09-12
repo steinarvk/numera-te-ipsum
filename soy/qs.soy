@@ -163,10 +163,12 @@
                   data-target="#qs-modal-event-datetimepicker"
           >&lt;time&gt;</button>
 
+          <input type="hidden" class="qs-event-is-instant" value="yes">
           <input type="hidden" class="qs-event-duration-mins">
           <input type="hidden" class="qs-event-end-time">
         {else}
           From
+          <input type="hidden" class="qs-event-is-instant" value="no">
           <input type="hidden"
                  id="qs-event-start-datetime-hidden">
           <button type="button"
