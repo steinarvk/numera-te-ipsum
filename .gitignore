@@ -10,3 +10,6 @@ dist/
 .aliases
 devconfig/
 soylib/
+closurejs/compiler.jar
+closurejs/closure-library/
+closurejs/gen/
