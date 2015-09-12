@@ -8,7 +8,7 @@ modules.eventreporting = (function() {
         rangestart = moment(rangestart_raw),
         rangeend = null,
         timerId = null,
-        fmt = "MMMM Do HH:mm",
+        fmt = "dddd MMMM Do HH:mm",
         currentResult = null;
 
     function updateLabels() {
