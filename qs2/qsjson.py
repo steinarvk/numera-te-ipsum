@@ -1,9 +1,12 @@
 import time
 import pytz
 import dateutil.parser
+import calendar
 import tzlocal
 import logging
 import re
+
+import qs2.timeutil
 
 def parse_json_string_datetime(s):
   # dateutil is nice, but a little too forgiving.
@@ -18,9 +21,9 @@ def json_string_datetime(dt_with_tz):
   dt_utc = dt_with_tz.astimezone(pytz.utc)
   return dt_utc.isoformat()
 
-def json_datetime(dt_localtime): # deprecated, to be retired
-  assert not dt_localtime.tzinfo
-  return time.mktime(dt_localtime.timetuple())
+def json_datetime(dt): # deprecated, to be retired
+  dt_utc = qs2.timeutil.hacky_force_timezone(dt)
+  return calendar.timegm(dt_utc.timetuple())
 
 def json_duration(td):
   return td.total_seconds()
