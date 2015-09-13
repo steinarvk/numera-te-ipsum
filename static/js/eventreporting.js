@@ -118,8 +118,8 @@ modules.eventreporting = (function() {
     }
 
     function getChosen() {
-      if (result) {
-        result.comment = getComment();
+      if (currentResult) {
+        currentResult.comment = getComment();
       }
       return currentResult;
     }
