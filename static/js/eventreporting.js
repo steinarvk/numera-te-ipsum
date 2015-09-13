@@ -93,7 +93,6 @@ modules.eventreporting = (function() {
           "duration_minutes": 0,
           "t0": t0,
           "t1": t0,
-          "comment": getComment(),
         };
       } else if (m > 0) {
         t1 = moment(t0).add(m, "minutes");
@@ -105,7 +104,6 @@ modules.eventreporting = (function() {
           "t0": t0,
           "duration_minutes": m,
           "t1": t1,
-          "comment": getComment(),
         };
       }
     }
@@ -120,6 +118,9 @@ modules.eventreporting = (function() {
     }
 
     function getChosen() {
+      if (result) {
+        result.comment = getComment();
+      }
       return currentResult;
     }
 
