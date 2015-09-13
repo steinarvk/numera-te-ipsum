@@ -446,10 +446,11 @@ def fetch_event_report_tail(conn, user_id, event_type):
       (qs2.model.event_record.c.user_id_owner == user_id)
     ).order_by(qs2.model.event_record.c.end.desc()).limit(1)
   results = sql_op(conn, "fetch tail of event record", query).fetchall()
+  backdating = datetime.timedelta(days=1)  # TODO: make configurable somehow
   if results:
     rv = hacky_force_timezone(results[0].end)
   else:
-    rv = hacky_force_timezone(event_type.timestamp)
+    rv = hacky_force_timezone(event_type.timestamp - backdating)
   return truncate_to_second_resolution(rv)
 
 def append_to_event_record(conn, event_type, start, end, state, req_id, comment=None):
