@@ -26,7 +26,7 @@ def download_soy():
 @task
 def soygen():
   sources = ",".join(glob.glob("soy/*.soy"))
-  local("java -jar soylib/SoyToJsSrcCompiler.jar --outputPathFormat closurejs/gen/templates.js --shouldProvideRequireSoyNamespaces --shouldGenerateJsdoc --srcs " + sources)
+  local("java -jar soylib/SoyToJsSrcCompiler.jar --outputPathFormat closurejs/gen/templates.js --shouldProvideRequireSoyNamespaces --shouldGenerateJsdoc --allowExternalCalls false --srcs " + sources)
 
 @task
 def jscompile():
