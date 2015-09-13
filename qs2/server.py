@@ -12,6 +12,7 @@ import qs2.qsjson
 
 import qs2.flaskutil
 import qs2.logutil
+import qs2.captcha
 
 import qs2.configutil
 import logging
@@ -47,6 +48,12 @@ def register_new_user():
   with engine.connect() as conn:
     with conn.begin() as trans:
       arg = request.get_json()
+      if config["captcha.require_for_user_creation"] or "captcha" in arg:
+        answer = arg.get("captcha")
+        key = config["captcha.recaptcha_secret_key"]
+        ok = qs2.captcha.verify_recaptcha(key, answer, request.remote_addr)
+        if not ok:
+          return flask.jsonify(status="error", reason="CAPTCHA failure")
       user_id = qs2.operations.add_user(conn, arg["username"], arg["password"])
       return flask.jsonify(status="ok", user_id=user_id)
 

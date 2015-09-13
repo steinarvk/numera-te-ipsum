@@ -339,6 +339,72 @@
   {/call}
 {/template}
 
+/** Form text field. */
+{template .form_input_field}
+  {@param id: string}
+  {@param label: string}
+  {@param type: string}
+  {@param? name: string}
+  {@param? placeholder: string}
+
+  <div class="form-group">
+    <label for="{$id}">{$label}</label>
+    <input type="{$type}"
+           class="form-control"
+           id="{$id}"
+           {if isNonnull($name)}
+              name="{$name}"
+           {/if}
+           {if isNonnull($placeholder)}
+              placeholder="{$placeholder}"
+           {/if}
+    >
+  </div>
+{/template}
+
+/** Register new user dialog. */
+{template .register_user_dialog}
+  {@param id: string}
+  {@param captcha_sitekey: string}
+
+  {call .modal}
+    {param title: 'Register a new user' /}
+    {param id: $id /}
+    {param close_button: true /}
+    {param content kind="html"}
+      <form>
+        {call .form_input_field}
+          {param id: $id + '-form-username' /}
+          {param type: 'text' /}
+          {param name: 'username' /}
+          {param label: 'Username' /}
+          {param placeholder: 'Username' /}
+        {/call}
+        {call .form_input_field}
+          {param id: $id + '-form-password' /}
+          {param type: 'password' /}
+          {param name: 'password' /}
+          {param label: 'Password' /}
+          {param placeholder: 'Password' /}
+        {/call}
+
+        <div id="{$id}-captcha"
+             class="g-recaptcha"
+             data-sitekey="{$captcha_sitekey}">
+        </div>
+      </form>
+    {/param}
+    {param footer_content kind="html"}
+      {call .button}
+        {param id: $id + '-submit-button' /}
+        {param class: 'qs-dialog-submit' /}
+        {param style: 'success' /}
+        {param text: 'Register' /}
+      {/call}
+    {/param}
+  {/call}
+{/template}
+
 /** New question dialog. */
 {template .new_question_dialog}
   {@param id: string}
@@ -585,6 +651,12 @@
             <li>&nbsp;</li>
             <li>
               <a data-toggle="modal"
+                 data-target="#qs-modal-register-user-dialog">
+              Register new user
+              </a>
+            </li>
+            <li>
+              <a data-toggle="modal"
                  id="qs-id-logout">
               Log out
               </a>
@@ -710,12 +782,19 @@
 
 /** Core application */
 {template .app}
+  {@param captcha_sitekey: string}
+
   {call .login_dialog}
     {param id: 'login-dialog' /}
   {/call}
 
   {call .new_question_dialog}
     {param id: 'new-question-dialog' /}
+  {/call}
+
+  {call .register_user_dialog}
+    {param id: 'register-user-dialog' /}
+    {param captcha_sitekey: $captcha_sitekey /}
   {/call}
 
   {call .new_event_dialog}

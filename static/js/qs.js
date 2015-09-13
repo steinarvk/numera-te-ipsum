@@ -1,6 +1,8 @@
 $(function() {
   var body = $(document.body);
-  body.append(soy.renderAsElement(qs.core.app));
+  body.append(soy.renderAsElement(qs.core.app, {
+    captcha_sitekey: "6LfDxgwTAAAAAAiqF0krPnzEeL17_UW45g39_QVz",
+  }));
 
   var statusbar = modules.statusbar({});
   var credentials = modules.login({hook: onLoggedIn});
@@ -509,6 +511,65 @@ $(function() {
       console.log("successful get");
       console.log(data);
       presentItem(data.report);
+    });
+  });
+
+  $("#qs-modal-register-user-dialog button.qs-dialog-submit").click(function() {
+    var root = $("#qs-modal-register-user-dialog"),
+        reqdata = {
+          username: root.find("[name=username]").val(),
+          password: root.find("[name=password]").val(),
+          captcha: grecaptcha.getResponse(),
+        },
+        url = "/qs-api/u/";
+
+    grecaptcha.reset();
+
+    function goodbye(msg) {
+      showMessage(msg);
+      root.modal("hide");
+    }
+
+    function err(reason) {
+      goodbye({
+        style: "danger",
+        header: "Error adding new event.",
+        text: reason,
+      });
+    }
+
+    console.log("registering user:");
+    console.log(reqdata);
+
+    if (reqdata.username.length <= 0) {
+      return err("Username is required.");
+    }
+
+    if (reqdata.password.length <= 0) {
+      return err("Password is required.");
+    }
+
+    if (reqdata.captcha.length <= 0) {
+      return err("CAPTCHA answer is required.");
+    }
+
+    $.ajax(url, {
+      type: "POST",
+      contentType: "application/json; charset: utf-8",
+      dataType: "json",
+      data: JSON.stringify(reqdata),
+    }).fail(function() {
+      err("Network error!");
+    }).done(function(resp) {
+      if (resp.status === "ok") {
+        goodbye({
+          style: "success",
+          header: "Welcome!",
+          text: "User '" + reqdata.username + "' successfully registered.",
+        });
+      } else {
+        err("Error: " + resp.reason);
+      }
     });
   });
 
