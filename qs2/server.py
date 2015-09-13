@@ -100,7 +100,7 @@ def get_event_report(conn, user_id, evt_id):
     if not event_type:
       return oops("no such event")
     return {
-      "report": qs2.operations.get_pending_event_append(conn, user_id, event_type),
+      "item": qs2.operations.get_pending_event_append(conn, user_id, event_type),
     }
 
 @user_page("events/<int:evt_id>/report", "POST", write=True)
@@ -164,6 +164,16 @@ def get_question(conn, user_id, sq_id):
 def skip_question(conn, user_id, sq_id, data, req_id):
   qs2.operations.skip_question(conn, user_id, sq_id)
   return {"question_skipped": sq_id}
+
+@user_page("questions/<int:sq_id>/answer", "GET")
+def get_answer_challenge(conn, user_id, sq_id):
+  with conn.begin() as trans:
+    q = qs2.operations.fetch_question(conn, user_id, sq_id)
+    if not q:
+      return oops("no such question")
+    return {
+      "item": qs2.operations.get_question_challenge(q),
+    }
 
 @user_page("questions/<int:sq_id>/answer", "POST", write=True)
 def post_answer(conn, user_id, sq_id, data, req_id):

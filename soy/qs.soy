@@ -644,6 +644,11 @@
               </a>
             </li>
             <li>
+              <a id="qs-id-force-answer-question">
+              Force answer question
+              </a>
+            </li>
+            <li>
               <a id="qs-id-report-an-event">
               Report an event
               </a>
@@ -807,23 +812,13 @@
     {param title: 'Select an event' /}
     {param id: 'select-an-event-dialog' /}
     {param content kind="html"}
-      {for $i in range(300)}
-        {call .button}
-          {param text kind="text"}
-            Hello {$i}
-          {/param}
-        {/call}
-        {call .button}
-          {param text kind="text"}
-            Loremipsum yes {$i}
-          {/param}
-        {/call}
-        {call .button}
-          {param text kind="text"}
-            Cute Italian yes {$i}
-          {/param}
-        {/call}
-      {/for}
+    {/param}
+  {/call}
+
+  {call .scrollable_area_modal}
+    {param title: 'Select a question' /}
+    {param id: 'select-a-survey-question-dialog' /}
+    {param content kind="html"}
     {/param}
   {/call}
 

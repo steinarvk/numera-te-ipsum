@@ -252,6 +252,12 @@ def make_trigger_conditions(conn, user_id, force):
     condition = base_condition & (model.triggers.c.next_trigger < now)
   return condition, base_condition
 
+def get_question_challenge(question):
+  return {
+    "type": "question",
+    "question": qs2.qsjson.survey_question_json(dict(question)),
+  }
+
 @qs2.logutil.profiled("get_pending_append")
 def get_pending_event_append(conn, user_id, event_type):
   # TODO, this is horrible, optimize query! (written very late at night)
@@ -305,10 +311,7 @@ def get_pending_questions(conn, user_id, columns=[], force=False, limit=None):
   if limit:
     query = query.limit(limit)
   results = sql_op(conn, "fetch pending questions", query).fetchall()
-  data = [(row.next_trigger, {
-            "type": "question",
-            "question": qs2.qsjson.survey_question_json(dict(row))
-          })
+  data = [(row.next_trigger, get_question_challenge(row))
           for row in results]
   count_query = sql.select([sql.func.count()]).select_from(joined).where(condition)
   count = sql_op(conn, "fetch query count", count_query).scalar()

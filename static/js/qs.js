@@ -500,17 +500,17 @@ $(function() {
     });
   }
 
-  body.on("click", ".qs-select-report-event", function() {
+  body.on("click", ".qs-select-present-item", function() {
     var url = $(this).attr("data-button-data");
 
-    console.log("selected report event: " + url);
+    console.log("selected present item: " + url);
     
-    $("#qs-modal-select-an-event-dialog").modal("hide");
+    $(".modal.in").modal("hide");
 
     get(url).done(function(data) {
       console.log("successful get");
       console.log(data);
-      presentItem(data.report);
+      presentItem(data.item);
     });
   });
 
@@ -573,6 +573,44 @@ $(function() {
     });
   });
 
+  $("#qs-id-force-answer-question").click(function() {
+    var d = $("#qs-modal-select-a-survey-question-dialog"),
+        fetchUrl = "/qs-api/u/" + credentials.username + "/questions";
+
+    $.ajax(fetchUrl, {
+      username: credentials.username,
+      password: credentials.password,
+    }).fail(function() {
+      showMessage({
+        style: "danger",
+        header: "Error.",
+        text: "Failed to fetch questions from server.",
+      });
+    }).done(function(data) {
+      var i = 0, buttons = [];
+
+      while (i < data.questions.length) {
+        buttons.push({
+          text: data.questions[i].text,
+          data: fetchUrl + "/" + data.questions[i].id + "/answer",
+        });
+
+        i++;
+      }
+
+      soy.renderElement(
+        d.find(".qs-scrollable-area")[0],
+        qs.core.button_cloud,
+        {
+          button_class: "qs-select-present-item",
+          buttons: buttons,
+        }
+      );
+
+      d.modal("show");
+    });
+  });
+
   $("#qs-id-report-an-event").click(function() {
     var d = $("#qs-modal-select-an-event-dialog"),
         fetchUrl = "/qs-api/u/" + credentials.username + "/events";
@@ -602,7 +640,7 @@ $(function() {
         d.find(".qs-scrollable-area")[0],
         qs.core.button_cloud,
         {
-          button_class: "qs-select-report-event",
+          button_class: "qs-select-present-item",
           buttons: buttons,
         }
       );

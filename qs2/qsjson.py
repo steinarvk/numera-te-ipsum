@@ -29,7 +29,7 @@ def json_duration(td):
   return td.total_seconds()
 
 def survey_question_json(q):
-  return {
+  rv = {
     "id": q["sq_id"],
     "text": q["question"],
     "labels": {
@@ -37,11 +37,15 @@ def survey_question_json(q):
       "middle": q["middle_label"],
       "high": q["high_label"],
     },
-    "trigger": json_datetime(q["next_trigger"]),
     "timestamp": json_datetime(q["timestamp"]),
-    "interval": json_duration(q["mean_delay"]),
-    "active": q["active"],
   }
+  if "next_trigger" in q:
+    rv["trigger"] = json_datetime(q["next_trigger"])
+  if "mean_delay" in q:
+    rv["interval"] = json_duration(q["mean_delay"])
+  if "active" in q:
+    rv["active"] = q["active"],
+  return rv
 
 def event_type_json(ev):
   # TODO fix the inconsistency here, with dict/obj
