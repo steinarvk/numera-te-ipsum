@@ -9,6 +9,7 @@ import time
 import sqlalchemy
 import qs2.operations
 import qs2.qsjson
+import qs2.jsonexport
 
 import qs2.flaskutil
 import qs2.logutil
@@ -20,6 +21,9 @@ import os
 import qs2.parsing
 import operator
 import datetime
+import pytz
+
+from qs2.error import ValidationFailed
 
 config = qs2.configutil.Config(os.environ["QS_CONFIG_FILE"])
 qs2.logutil._config = config
@@ -144,6 +148,28 @@ def post_new_question(conn, user_id, data, req_id):
       },
     )
   }
+
+def parse_optional_datetime(value):
+  if value is None:
+    return None
+  p = qs2.qsjson.parse_json_string_datetime
+  return qs2.validation.parse_as("datetime", p, value)
+
+@user_page("export/json", "GET")
+def export_json(conn, user_id):
+  query = request.args.get("vars", None)
+  if not query:
+    raise ValidationFailed("no query provided")
+  keys = qs2.jsonexport.parse_query(query)
+  start = parse_optional_datetime(request.args.get("start", None))
+  end = parse_optional_datetime(request.args.get("end", None))
+  timestamp = datetime.datetime.now(pytz.utc)
+  with conn.begin() as trans:
+    return {
+      "timestamp": qs2.qsjson.json_string_datetime(timestamp),
+      "exported": [qs2.jsonexport.export(conn, user_id, key, start, end)
+                   for key in keys],
+    }
 
 @user_page("export/csv/<query>", "GET")
 def export_csv(conn, user_id, query):

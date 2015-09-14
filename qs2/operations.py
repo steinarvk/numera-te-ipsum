@@ -352,6 +352,21 @@ def fetch_question(conn, user_id, question_id, *columns):
   if row:
     return dict(row)
 
+@qs2.logutil.profiled("fetch_survey_question_answers")
+def fetch_survey_question_answers(conn, user_id, question_id, t0=None, t1=None):
+  condition = (
+      (model.survey_answers.c.user_id_owner == user_id)
+    & (model.survey_answers.c.sq_id == question_id)
+  )
+  if t0 is not None:
+    condition = condition & (model.survey_answers.c.timestamp >= t0)
+  if t1 is not None:
+    # Note, exclusive. This makes it easy to request distinct batches.
+    condition = condition & (model.survey_answers.c.timestamp < t1)
+  query = sql.select([model.survey_answers]).where(
+    condition).order_by(model.survey_answers.c.timestamp.asc())
+  return sql_op(conn, "fetch question answers", query).fetchall()
+
 def fetch_csv_export(conn, user_id, querystring, out):
   terms = qs2.csvexport.parse_csv_query(querystring)
   rawstreams = [map(lambda row: (qs2.qsjson.json_datetime(row.timestamp),
