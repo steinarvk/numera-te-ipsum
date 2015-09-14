@@ -398,10 +398,10 @@ $(function() {
     if (checked.length !== 1) {
       return err("whether or not to track duration must be selected");
     }
-    if (checked[0].name !== "yes" && checked[0].name !== "no") {
+    if (checked.val() !== "yes" && checked.val() !== "no") {
       return err("not a valid selection for whether or not to track duration");
     }
-    data.use_duration = checked[0].name === "yes";
+    data.use_duration = checked.val() === "yes";
 
     data.trigger.delay_s = parseInt(
       root.find("#new-event-dialog-frequency").val(), 10);
