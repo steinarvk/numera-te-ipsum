@@ -249,7 +249,7 @@ def get_pending(conn, user_id):
   rv["pending"].sort()
   if limit:
     rv["pending"] = rv["pending"][:limit]
-  rv["pending"] = [v for (k,v) in rv["pending"]]
+  rv["pending"] = [v for (p,k,v) in rv["pending"]]
   if "first_trigger" in rv:
     rv["first_trigger"] = qs2.qsjson.json_datetime(rv["first_trigger"])
   return rv

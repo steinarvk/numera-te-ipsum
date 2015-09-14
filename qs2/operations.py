@@ -21,6 +21,9 @@ from sqlalchemy import sql
 
 from qs2.error import OperationFailed, ValidationFailed
 
+PRIORITY_NORMAL = 0
+PRIORITY_CORRECTION = -10
+
 class DbFetch(object):
   def __init__(self, conn, columns=[], **kwargs):
     self.conn = conn
@@ -238,7 +241,8 @@ def get_pending_events_corrections(conn, user_id, limit=None):
     }
   count = 0 # TODO
   earliest = None # TODO
-  return [(row.start, taskify(row)) for row in results], count, earliest
+  return [(PRIORITY_CORRECTION, row.start, taskify(row))
+          for row in results], count, earliest
 
 def make_trigger_conditions(conn, user_id, force):
   now = datetime.datetime.now()
@@ -284,7 +288,9 @@ def get_pending_events_appends(conn, user_id, force=False, limit=None):
   results = sql_op(conn, "fetch pending events", query)
   rv = []
   for row in results:
-    rv.append((row.next_trigger, get_pending_event_append(conn, user_id, row)))
+    rv.append((PRIORITY_NORMAL,
+               row.next_trigger,
+               get_pending_event_append(conn, user_id, row)))
   count = 0 # TODO
   earliest = None # TODO
   return rv, count, earliest
@@ -311,7 +317,7 @@ def get_pending_questions(conn, user_id, columns=[], force=False, limit=None):
   if limit:
     query = query.limit(limit)
   results = sql_op(conn, "fetch pending questions", query).fetchall()
-  data = [(row.next_trigger, get_question_challenge(row))
+  data = [(PRIORITY_NORMAL, row.next_trigger, get_question_challenge(row))
           for row in results]
   count_query = sql.select([sql.func.count()]).select_from(joined).where(condition)
   count = sql_op(conn, "fetch query count", count_query).scalar()
