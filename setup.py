@@ -15,5 +15,6 @@ setup(
     "tzlocal>=1.2",
     "python-dateutil>=2.4.2",
     "requests>=2.7.0",
+    "python-slugify>=1.1.3",
   ],
 )

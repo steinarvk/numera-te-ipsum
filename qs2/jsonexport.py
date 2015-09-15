@@ -25,6 +25,7 @@ def format_value(t, **kwargs):
 
 def typedesc_survey_question(q):
   return {
+    "_name": qs2.qsjson.question_slugify(q["question"]),
     "survey": {
       "question": q["question"],
       "low_label": q["low_label"],

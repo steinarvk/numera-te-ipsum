@@ -5,8 +5,33 @@ import calendar
 import tzlocal
 import logging
 import re
+import slugify
 
 import qs2.timeutil
+
+STOP_WORDS = set("""
+  the be to of and a an in that have i it for
+  on with he she as you your do at this but his
+  her by from they their we our say said or will
+  my mine one all would there what so up out if
+  about who get which go me when make can like
+  time just him know take into year some could
+  them than then now right look come only its
+  it's over think also back after use two how why
+  where when work first well way even new want
+  because any these give day today most us
+
+  much are feeling moment
+
+  during last waking hours often felt few
+""".split())
+
+def question_slugify(q):
+  if ":" in q:
+    _, q = q.split(":", 1)
+  words = slugify.slugify(q.lower()).split("-")
+  words = [w for w in words if w not in STOP_WORDS]
+  return "sq-" + slugify.slugify(" ".join(words))
 
 def parse_json_string_datetime(s):
   # dateutil is nice, but a little too forgiving.
@@ -32,6 +57,7 @@ def survey_question_json(q):
   rv = {
     "id": q["sq_id"],
     "text": q["question"],
+    "_slug": question_slugify(q["question"]),
     "labels": {
       "low": q["low_label"],
       "middle": q["middle_label"],
