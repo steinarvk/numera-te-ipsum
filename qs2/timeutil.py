@@ -3,6 +3,23 @@ import dateutil.parser
 import datetime
 import tzlocal
 
+def parse_duration(s):
+  num, unit = s[:-1], s[-1]
+  assert num.isdigit() or (num.count(".") == 1 and num.replace(":", "").isdigit())
+  assert unit.isalpha()
+  if "." in num:
+    n = float(num)
+  else:
+    n = int(num)
+  key = {
+    "s": "seconds",
+    "m": "minutes",
+    "h": "hours",
+    "d": "days",
+    "w": "weeks",
+  }[unit]
+  return datetime.timedelta(**{key: n})
+
 def hacky_force_timezone(dt_naive_assumed_local):
   if dt_naive_assumed_local.tzinfo:
     return dt_naive_assumed_local.astimezone(pytz.utc)

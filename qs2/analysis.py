@@ -4,6 +4,7 @@ import bisect
 import datetime
 import json
 import pytz
+import argparse
 
 Epoch = datetime.datetime(1970, 1, 1, tzinfo=pytz.utc)
 
@@ -50,6 +51,10 @@ class MemoryStream(object):
   def value(self, i):
     e = self.data["values"][i]
     return self.func(e["value"])
+
+  def items(self):
+    for i in range(len(self)):
+      yield self[i], self.value(i)
     
   def __getitem__(self, i):
     e = self.data["values"][i]
@@ -73,12 +78,52 @@ def write_influxdb(f, name, seq):
   for t, v in seq:
     print >>f, name, "value={}".format(v), epoch_nanoseconds(t) 
 
-if __name__ == '__main__':
-  filename = sys.argv[1]
-  measurement_name = sys.argv[2]
-  with open(filename, "r") as f:
-    data = json.load(f)
+def sum_of_streams_main(args):
+  data = json.load(args.file)
   streams = load_answer_streams(data)
   res = datetime.timedelta(minutes=5)
   seq = accumulate_value_streams(streams, sum, res)
-  write_influxdb(sys.stdout, measurement_name, seq)
+  write_influxdb(args.output, args.name, seq)
+
+def export_individual_by_slug_main(args):
+  for f in args.file:
+    data = json.load(f)
+    for stream in load_answer_streams(data):
+      measurement_name = stream.data["value_type"]["_name"]
+      write_influxdb(args.output, measurement_name, stream.items())
+
+def make_sum_of_streams_parser(subparsers):
+  parser = subparsers.add_parser("sum_of_streams",
+    help="interpolate and add up the values for all streams in the file")
+  parser.set_defaults(command=sum_of_streams_main)
+  parser.add_argument("key", help="name of the scalar to extract")
+  parser.add_argument("file",
+    type=argparse.FileType("r"),
+    help="JSON file(s) to analyze")
+  parser.add_argument("name", help="name of output measure")
+  parser.add_argument("--resolution", type=qs2.timeutil.parse_duration,
+    default=datetime.timedelta(minutes=5),
+    help="resolution (e.g. '5m')")
+  parser.add_argument("--output", default=sys.stdout,
+    type=argparse.FileType("w"),
+    help="output file")
+
+def make_export_each_parser(subparsers):
+  parser = subparsers.add_parser("export_each",
+    help="output every raw stream in the file")
+  parser.set_defaults(command=export_individual_by_slug_main)
+  parser.add_argument("key", help="name of the scalar to extract")
+  parser.add_argument("file", nargs="+",
+    type=argparse.FileType("r"),
+    help="JSON file(s) to analyze")
+  parser.add_argument("--output", default=sys.stdout,
+    type=argparse.FileType("w"),
+    help="output file")
+
+if __name__ == '__main__':
+  parser = argparse.ArgumentParser("analysis")
+  subparsers = parser.add_subparsers()
+  make_sum_of_streams_parser(subparsers)
+  make_export_each_parser(subparsers)
+  args = parser.parse_args()
+  args.command(args)
