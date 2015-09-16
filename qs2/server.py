@@ -155,12 +155,21 @@ def parse_optional_datetime(value):
   p = qs2.qsjson.parse_json_string_datetime
   return qs2.validation.parse_as("datetime", p, value)
 
+@user_page("keys", "GET")
+def get_keys(conn, user_id):
+  return {
+    "keys": qs2.operations.fetch_all_measurement_keys(conn, user_id),
+  }
+
 @user_page("export/json", "GET")
 def export_json(conn, user_id):
   query = request.args.get("vars", None)
-  if not query:
+  if query:
+    keys = qs2.jsonexport.parse_query(query)
+  elif request.args.get("all"):
+    keys = qs2.operations.fetch_all_measurement_keys(conn, user_id)
+  else:
     raise ValidationFailed("no query provided")
-  keys = qs2.jsonexport.parse_query(query)
   start = parse_optional_datetime(request.args.get("start", None))
   end = parse_optional_datetime(request.args.get("end", None))
   timestamp = datetime.datetime.now(pytz.utc)

@@ -199,6 +199,7 @@ _implicit_trigger_columns = [
     model.triggers.c.active,
 ]
 
+@qs2.logutil.profiled("get_all_event_types")
 def get_all_event_types(conn, user_id):
   columns = [model.event_types] + _implicit_trigger_columns
   query = sql.select(columns).\
@@ -208,6 +209,7 @@ def get_all_event_types(conn, user_id):
     ).order_by(model.event_types.c.timestamp.asc())
   return sql_op(conn, "fetch event types", query).fetchall()
 
+@qs2.logutil.profiled("get_all_questions")
 def get_all_questions(conn, user_id):
   columns = [model.survey_questions] + _implicit_trigger_columns
   query = sql.select(columns).\
@@ -449,6 +451,13 @@ def skip_question(conn, user_id, question_id):
   now = datetime.datetime.now()
   with conn.begin() as trans:
     reset_trigger(conn, fetch_question_trigger_id(conn, user_id, question_id))
+
+def fetch_all_question_keys(conn, user_id):
+  return [("question", q["sq_id"]) for q in get_all_questions(conn, user_id)]
+
+def fetch_all_measurement_keys(conn, user_id):
+  # TODO events
+  return fetch_all_question_keys(conn, user_id)
 
 def log_request(conn, url, referer, user_agent, method, client_ip):
   now = datetime.datetime.now()
