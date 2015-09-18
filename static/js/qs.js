@@ -90,6 +90,12 @@ $(function() {
       return;
     }
 
+    if (item.type === "chess_puzzle") {
+      currentItem = item;
+      presentChess(currentItem.chess_puzzle);
+      return;
+    }
+
     showMessage({
       style: "danger",
       header: "Not implemented yet!",
@@ -205,6 +211,59 @@ $(function() {
 
       return true;
     }
+  }
+
+  function presentChess(q) {
+    var main = $("#qs-main-widget")[0];
+
+    soy.renderElement(
+      main,
+      qs.core.chess_puzzle_panel,
+      {
+        id: "qs-puzzle-chessboard",
+      }
+    );
+
+    var dims = clientDimsPx(),
+        min_ = Math.min(dims.width, dims.height),
+        side = Math.floor(0.75 * min_),
+        fen = "r1k4r/p2n2p1/2b2b1p/1p1n1p2/2PP4/3Q1NB1/1P3PPP/R5K1 w - - 1 20",
+        chess = new Chess(fen),
+        board,
+        chosenMove = null;
+    console.log(dims);
+    console.log(min_);
+    console.log(side);
+
+    $("#qs-puzzle-chessboard").width(side).height(side);
+
+    board = new Chessboard("qs-puzzle-chessboard", {
+      position: fen,
+      eventHandlers: {
+        onPieceSelected: function(square) {
+          console.log("onPiece: " + square);
+
+          if (chosenMove !== null) {
+            return [];
+          }
+
+          var moves = [];
+          chess.moves({square: square, verbose: false}).forEach(function(x) {
+            console.log(x);
+            moves.push(ChessUtils.convertNotationSquareToIndex(x));
+          });
+          return moves;
+        },
+        onMove: function(move) {
+          console.log(move);
+          chess.move({from: move.from, to: move.to, promotion: "q"});
+          chosenMove = move;
+          console.log(chess.fen());
+          return chess.fen();
+        },
+      },
+    });
+
   }
 
   function presentQuestion(q) {
@@ -500,6 +559,13 @@ $(function() {
     });
   }
 
+  function clientDimsPx() {
+    return {
+      height: $("body").height() - $("nav").height() - $("#qs-footer").height(),
+      width: $("body").width(),
+    };
+  }
+
   body.on("click", ".qs-select-present-item", function() {
     var url = $(this).attr("data-button-data");
 
@@ -647,5 +713,9 @@ $(function() {
 
       d.modal("show");
     });
+  });
+
+  $("#qs-id-try-chessboard").click(function() {
+    presentItem({type: "chess_puzzle"});
   });
 });

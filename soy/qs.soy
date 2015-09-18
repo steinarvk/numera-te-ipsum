@@ -195,6 +195,20 @@
   {/call}
 {/template}
 
+/** A chessboard panel (prototype). */
+{template .chess_puzzle_panel}
+  {@param id: string}
+
+  {call .panel data="all"}
+    {param title: 'Chess puzzle' /}
+    {param content kind="html"}
+      <div id="{$id}"
+           class="puzzle_chessboard">
+      </div>
+    {/param}
+  {/call}
+{/template}
+
 /** A question panel. */
 {template .question_panel}
   {@param text: string}
@@ -666,6 +680,11 @@
               <a data-toggle="modal"
                  id="qs-id-logout">
               Log out
+              </a>
+            </li>
+            <li>
+              <a id="qs-id-try-chessboard">
+              Try Chessboard
               </a>
             </li>
             <li>

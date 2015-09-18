@@ -127,3 +127,7 @@ html, body {
   overflow-x: hidden;
   max-height: 300px;
 }
+
+.puzzle_chessboard {
+  width: 100%;
+}
