@@ -14,6 +14,7 @@ import qs2.jsonexport
 import qs2.flaskutil
 import qs2.logutil
 import qs2.captcha
+import qs2.chessgen
 
 import qs2.configutil
 import logging
@@ -22,6 +23,7 @@ import qs2.parsing
 import operator
 import datetime
 import pytz
+import hashlib
 
 from qs2.error import ValidationFailed
 
@@ -31,6 +33,10 @@ qs2.logutil.setup_logging(filename=config["logging.filename"],
                           level=config.get("logging.level", "info"))
 app = Flask("qs2")
 engine = sqlalchemy.create_engine(config["database.url"])
+
+if config.get("chess"):
+  chesspuzzlegen = qs2.chessgen.IndexedGameCollection(
+    config["chess.collection_index"])
 
 def user_page(*args, **kwargs):
   return qs2.flaskutil.user_page(app, engine, *args, **kwargs)
@@ -187,6 +193,23 @@ def export_csv(conn, user_id, query):
   csv_data = stream.getvalue()
   csv_filename = "export-{}.csv".format(int(time.time()))
   return flask.Response(csv_data, 200, mimetype="text/plain")
+
+@user_page("chesspuzzles/generate", "GET")
+def generate_chesspuzzle(conn, user_id):
+  pgn, n, state = chesspuzzlegen.get()
+  rv = {
+    "item": {
+      "type": "chess_puzzle",
+      "id": hashlib.sha1(state).hexdigest(),
+      "chess_puzzle": {
+        "metadata": dict(pgn.headers),
+        "moveno": n,
+        "fen": state,
+      }
+    },
+  }
+  logging.info("generated chess puzzle: %s", repr(rv))
+  return rv
 
 @user_page("questions/<int:sq_id>", "GET")
 def get_question(conn, user_id, sq_id):

@@ -16,5 +16,6 @@ setup(
     "python-dateutil>=2.4.2",
     "requests>=2.7.0",
     "python-slugify>=1.1.3",
+    "python-chess>=0.11.1",
   ],
 )

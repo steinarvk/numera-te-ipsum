@@ -44,7 +44,7 @@ $(function() {
   }
 
   function dismissCurrentItem() {
-    if (itemCallbacks) {
+    if (itemCallbacks && itemCallbacks.dismiss) {
       itemCallbacks.dismiss();
     }
     itemCallbacks = null;
@@ -227,7 +227,7 @@ $(function() {
     var dims = clientDimsPx(),
         min_ = Math.min(dims.width, dims.height),
         side = Math.floor(0.75 * min_),
-        fen = "r1k4r/p2n2p1/2b2b1p/1p1n1p2/2PP4/3Q1NB1/1P3PPP/R5K1 w - - 1 20",
+        fen = q.fen,
         chess = new Chess(fen),
         board,
         chosenMove = null;
@@ -716,6 +716,9 @@ $(function() {
   });
 
   $("#qs-id-try-chessboard").click(function() {
-    presentItem({type: "chess_puzzle"});
+    var url = "/qs-api/u/" + credentials.username + "/chesspuzzles/generate";
+    get(url).done(function(data) {
+      presentItem(data.item);
+    });
   });
 });
