@@ -87,3 +87,25 @@ event_record = Table("event_record", metadata,
   Column("end", DateTimeTz, nullable=False, index=True),
   Column("comment", String),
 )
+
+chess_puzzles = Table("chess_puzzles", metadata,
+  Column("chess_puzzle_id", Integer, primary_key=True),
+  Column("timestamp", DateTimeTz, nullable=False),
+  Column("req_id_creator", Integer, ForeignKey("requests.req_id")),
+  Column("user_id_owner", Integer, ForeignKey("users.user_id")),
+  Column("fen", String, nullable=False),
+  Column("deadline", Integer),
+  Column("pgn", String, nullable=True),
+  Column("move_number", Integer, nullable=True),
+)
+
+chess_answers = Table("chess_answers", metadata,
+  Column("chess_answer_id", Integer, primary_key=True),
+  Column("chess_puzzle_id", Integer, ForeignKey("chess_puzzles.chess_puzzle_id")),
+  Column("timestamp", DateTimeTz, nullable=False),
+  Column("req_id_creator", Integer, ForeignKey("requests.req_id")),
+  Column("user_id_owner", Integer, ForeignKey("users.user_id")),
+  Column("move", String, nullable=True),
+  Column("expired", Boolean, nullable=False),
+  Column("answer_latency", Interval, nullable=True),
+)
