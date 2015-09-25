@@ -48,6 +48,7 @@ $(function() {
       itemCallbacks.dismiss();
     }
     itemCallbacks = null;
+    $("#qs-main-widget").html("");
   }
 
   function loadNextItem() {
@@ -214,13 +215,16 @@ $(function() {
   }
 
   function presentChess(q) {
-    var main = $("#qs-main-widget")[0];
+    var main = $("#qs-main-widget")[0],
+        deadline = q.deadline,
+        puzzle_id = q.chess_puzzle_id;
 
     soy.renderElement(
       main,
       qs.core.chess_puzzle_panel,
       {
         id: "qs-puzzle-chessboard",
+        deadline: deadline,
       }
     );
 
@@ -229,15 +233,120 @@ $(function() {
         side = Math.floor(0.75 * min_),
         fen = q.fen,
         chess = new Chess(fen),
+        puzzleStartedAt,
         board,
+        chessTimerId,
+        submitted = false,
         chosenMove = null;
     console.log(dims);
     console.log(min_);
     console.log(side);
 
+    itemCallbacks.dismiss = function() {
+      if (chessTimerId) {
+        clearInterval(chessTimerId);
+      }
+      console.log("chess panel dismissed!");
+    }
+
+    function submitResult(result) {
+      if (submitted) {
+        return;
+      }
+      submitted = true;
+      console.log("would submit result: ");
+      console.log(result);
+
+      result.fen = fen;
+      result.deadline = deadline;
+      result.latency = new Date().getTime() - puzzleStartedAt;
+
+      var url = "/qs-api/u/" + credentials.username + "/chesspuzzles/" + puzzle_id + "/answer";
+      post(url, result).done(function() {
+        console.log("successfully sent report for " + url);
+      });
+    }
+
+    itemCallbacks.submitCallback = function() {
+      if (chosenMove === null) {
+        showMessage({
+          style: "danger",
+          header: "Oops.",
+          text: "Select a legal move before submitting!",
+        });
+        return false;
+      }
+
+      submitResult({
+        "expired": false,
+        "move": chosenMove.from + chosenMove.to,
+      });
+
+      console.log(chosenMove);
+
+      return true;
+    }
+
+    itemCallbacks.skipCallback = function() {
+      console.log("skipped puzzle " + fen);
+      return true;
+    }
+
     $("#qs-puzzle-chessboard").width(side).height(side);
 
+    $("#qs-puzzle-chessboard-begin").click(function() {
+      puzzleStartedAt = new Date().getTime();
+      chessTimerId = setInterval(timerHook, 50);
+
+      $(".qs-chess-puzzle-pre-hidden").hide();
+      $(".qs-chess-puzzle-hidden").css("visibility", "visible");
+
+      function timerHook() {
+        var t = new Date().getTime(),
+            timeSpent = (t - puzzleStartedAt),
+            timeLeft = deadline * 1000 - timeSpent,
+            secondsLeft = Math.ceil(timeLeft / 1000.0),
+            progress = timeLeft / (deadline * 1000);
+        if (progress <= 0) {
+          clearInterval(chessTimerId);
+          showMessage({
+            style: "danger",
+            header: "Time's up!",
+            text: "Sorry, your " + deadline + " seconds are up!",
+          });
+          submitResult({expired: true});
+          dismissCurrentItem();
+        } else {
+          $(main).find(".progress-bar").width("" + (100 * progress) + "%");
+          $(main).find(".qs-chess-seconds-left").html("" + secondsLeft);
+        }
+      }
+    });
+
+    function setMove(move) {
+      chess = new Chess(fen);
+
+      if (move !== null) {
+        console.log(move);
+        chess.move({from: move.from, to: move.to, promotion: "q"});
+        chosenMove = move;
+        $("#qs-puzzle-chessboard-chess-move").html("Move chosen: " + move.from + " to " + move.to);
+      } else {
+        chosenMove = null;
+        $("#qs-puzzle-chessboard-chess-move").html("");
+      }
+
+      console.log(chess.fen());
+      board.setPosition(chess.fen());
+    }
+
+    $("#qs-puzzle-chessboard-reset").click(function() {
+      setMove(null);
+    });
+
+
     board = new Chessboard("qs-puzzle-chessboard", {
+      useAnimation: false,
       position: fen,
       eventHandlers: {
         onPieceSelected: function(square) {
@@ -255,10 +364,7 @@ $(function() {
           return moves;
         },
         onMove: function(move) {
-          console.log(move);
-          chess.move({from: move.from, to: move.to, promotion: "q"});
-          chosenMove = move;
-          console.log(chess.fen());
+          setMove(move);
           return chess.fen();
         },
       },
@@ -546,6 +652,24 @@ $(function() {
 
   });
 
+  function post(url, data, args) {
+    args = args || {};
+    data = data || {};
+    args.username = credentials.username;
+    args.password = credentials.password;
+    args.type = "POST";
+    args.contentType = "application/json; charset: utf-8";
+    args.dataType = "json";
+    args.data = JSON.stringify(data);
+    return $.ajax(url, args).fail(function() {
+      showMessage({
+        style: "danger",
+        header: "Error.",
+        text: "Network request failed!",
+      });
+    });
+  }
+
   function get(url, args) {
     args = args || {};
     args.username = credentials.username;
@@ -717,7 +841,7 @@ $(function() {
 
   $("#qs-id-try-chessboard").click(function() {
     var url = "/qs-api/u/" + credentials.username + "/chesspuzzles/generate";
-    get(url).done(function(data) {
+    post(url).done(function(data) {
       presentItem(data.item);
     });
   });

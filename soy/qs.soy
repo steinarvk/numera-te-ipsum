@@ -198,12 +198,44 @@
 /** A chessboard panel (prototype). */
 {template .chess_puzzle_panel}
   {@param id: string}
+  {@param deadline: int}
 
   {call .panel data="all"}
     {param title: 'Chess puzzle' /}
     {param content kind="html"}
       <div id="{$id}"
-           class="puzzle_chessboard">
+           class="qs-chess-puzzle-board qs-chess-puzzle-hidden">
+      </div>
+      <div class="qs-chess-puzzle-panel">
+        <div id="{$id}-chess-move">
+        </div>
+        <p>
+        White to move. You have <span class="qs-chess-seconds-left">{$deadline}</span> seconds to move.
+        </p>
+        <div class="qs-chess-puzzle-pre-hidden">
+          {call .button}
+            {param id: $id + '-begin' /}
+            {param class: 'qs-chess-puzzle-begin' /}
+            {param style: 'success' /}
+            {param text: 'Start puzzle' /}
+          {/call}
+        </div>
+        <div class="qs-chess-puzzle-hidden">
+          <div class="progress">
+            <div class="progress-bar"
+                 role="progressbar"
+                 style="width: 100%"
+            >
+            </div>
+          </div>
+
+          {call .button}
+            {param id: $id + '-reset' /}
+            {param class: 'qs-chess-puzzle-reset' /}
+            {param style: 'danger' /}
+            {param text: 'Reset' /}
+          {/call}
+        </div>
       </div>
     {/param}
   {/call}

@@ -11,6 +11,7 @@ import sqlalchemy
 import random
 import csv
 import json
+import pytz
 
 from qs2 import ui
 import qs2.csvexport
@@ -148,6 +149,56 @@ def create_trigger(conn, user_id, trigger_type, spec):
   )
   (trigger_id,) = sql_op(conn, "create new trigger", query).inserted_primary_key
   return trigger_id
+
+def fetch_chess_puzzle(conn, user_id, chess_puzzle_id):
+  logging.info("attempting to fetch chess puzzle %d for user %d", chess_puzzle_id, user_id)
+  columns = [model.chess_puzzles]
+  query = sql.select(columns).where(
+    (model.chess_puzzles.c.user_id_owner == user_id) &
+    (model.chess_puzzles.c.chess_puzzle_id == chess_puzzle_id)
+  )
+  row = sql_op(conn, "fetch chess puzzle by ID", query).fetchone()
+  if row:
+    return dict(row)
+
+def post_chess_puzzle_answer(conn, user_id, req_id, chess_puzzle_id, timestamp, move, expired, answer_latency):
+  with conn.begin() as trans:
+    query = sql.select([model.chess_answers.c.chess_answer_id]).where(
+      (model.chess_answers.c.user_id_owner == user_id) &
+      (model.chess_answers.c.chess_puzzle_id == chess_puzzle_id)
+    ).limit(1)
+    rows = sql_op(conn, "looking for prior answers", query).fetchall()
+    if len(rows) > 0:
+      raise OperationFailed("puzzle already answered")
+    query = model.chess_answers.insert().values(
+      timestamp=timestamp,
+      user_id_owner=user_id,
+      req_id_creator=req_id,
+      chess_puzzle_id=chess_puzzle_id,
+      move=move,
+      expired=expired,
+      answer_latency=answer_latency,
+    )
+    (answer_id,) = sql_op(conn, "post chess type", query).inserted_primary_key
+    return answer_id
+
+def register_chess_puzzle(conn, user_id, req_id, fen, deadline, pgn=None, move_number=None):
+  query = model.chess_puzzles.insert().values(
+    timestamp=datetime.datetime.now(tz=pytz.utc),
+    req_id_creator=req_id,
+    user_id_owner=user_id,
+    fen=fen,
+    deadline=deadline,
+    pgn=str(pgn),
+    move_number=move_number,
+  )
+  (chess_puzzle_id,) = sql_op(conn, "create chess puzzle", query).inserted_primary_key
+  return {
+    "chess_puzzle_id": chess_puzzle_id,
+    "fen": fen,
+    "deadline": deadline,
+  }
+
 
 def add_question(conn, user_id, question, low_label, high_label,
                  middle_label=None,

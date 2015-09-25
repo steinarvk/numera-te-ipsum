@@ -4,6 +4,14 @@
   margin-bottom: 2cm;
 }
 
+.progress {
+  transition-property: none;
+}
+
+.progress-bar {
+  transition-property: none;
+}
+
 .panel-heading {
   padding-top: 0;
   padding-bottom: 0;
@@ -128,6 +136,14 @@ html, body {
   max-height: 300px;
 }
 
-.puzzle_chessboard {
-  width: 100%;
+.qs-chess-puzzle-board {
+  float: left;
+}
+
+.qs-chess-puzzle-hidden {
+  visibility: hidden;
+}
+
+.qs-chess-puzzle-panel {
+  float: right;
 }

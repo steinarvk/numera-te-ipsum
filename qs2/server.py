@@ -5,6 +5,7 @@ import functools
 import decimal
 import StringIO
 import time
+import chess
 
 import sqlalchemy
 import qs2.operations
@@ -194,18 +195,49 @@ def export_csv(conn, user_id, query):
   csv_filename = "export-{}.csv".format(int(time.time()))
   return flask.Response(csv_data, 200, mimetype="text/plain")
 
-@user_page("chesspuzzles/generate", "GET")
-def generate_chesspuzzle(conn, user_id):
+@user_page("chesspuzzles/<chess_puzzle_id>/answer", "POST", write=True)
+def answer_chesspuzzle(conn, user_id, req_id, chess_puzzle_id, data):
+  chess_puzzle_id = int(chess_puzzle_id)
+  puzzle = qs2.operations.fetch_chess_puzzle(conn, user_id, chess_puzzle_id)
+  logging.info("puzzle returned: %s", str(puzzle))
+  if not puzzle:
+    return oops("no such puzzle")
+  if puzzle["fen"] != data["fen"]:
+    return oops("puzzle FEN mismatch")
+  if puzzle["deadline"] != data["deadline"]:
+    return oops("puzzle deadline mismatch")
+  now = datetime.datetime.now(tz=pytz.utc)
+#  age = now - puzzle["timestamp"]
+#  slack = datetime.timedelta(seconds=8)
+#  deadline = datetime.timedelta(seconds=puzzle["deadline"]) + slack
+#  if age > deadline:
+#    return oops("posted after deadline")
+  if data["expired"]:
+    move = None
+    expired = True
+  else:
+    expired = False
+    board = chess.Board(puzzle["fen"])
+    legal_moves = set(map(lambda x: x.uci(), board.generate_legal_moves()))
+    if data["move"] not in legal_moves:
+      return oops("illegal move")
+    move = data["move"]
+  latency = datetime.timedelta(milliseconds=data["latency"])
+  answer_id = qs2.operations.post_chess_puzzle_answer(conn, user_id, req_id,
+    chess_puzzle_id=chess_puzzle_id, timestamp=now, move=move,
+    expired=expired, answer_latency=latency)
+  return {"answer_id": answer_id}
+
+@user_page("chesspuzzles/generate", "POST", write=True)
+def generate_chesspuzzle(conn, user_id, req_id, data=None):
   pgn, n, state = chesspuzzlegen.get()
+  deadline = 60
+  puzzle = qs2.operations.register_chess_puzzle(conn, user_id, req_id,
+    fen=state, deadline=deadline, pgn=pgn, move_number=n)
   rv = {
     "item": {
       "type": "chess_puzzle",
-      "id": hashlib.sha1(state).hexdigest(),
-      "chess_puzzle": {
-        "metadata": dict(pgn.headers),
-        "moveno": n,
-        "fen": state,
-      }
+      "chess_puzzle": puzzle,
     },
   }
   logging.info("generated chess puzzle: %s", repr(rv))
