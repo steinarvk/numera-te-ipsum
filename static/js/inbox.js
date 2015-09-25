@@ -6,6 +6,7 @@ modules.inbox = function(options) {
       failureDelayMs = initialFailureDelayMs,
       timerId = setInterval(maybeFetch, 1000),
       askingForMore = true,
+      failing = false,
       queue = [],
       ack = [],
       metadata = {};
@@ -50,7 +51,11 @@ modules.inbox = function(options) {
   function onSuccess(data) {
     var nextAcked = [];
     metadata.size = data.queue_size;
-    nextAt = metadata.next_at = moment(data.first_trigger * 1000);
+    if (data.first_trigger) {
+      nextAt = metadata.next_at = moment(data.first_trigger * 1000);
+    } else {
+      failing = true;
+    }
     queue = data.pending;
 
     failureDelayMs = initialFailureDelayMs;
@@ -92,6 +97,10 @@ modules.inbox = function(options) {
 
   function maybeFetch() {
     if (!options.credentials.ok) {
+      return;
+    }
+
+    if (failing) {
       return;
     }
 
