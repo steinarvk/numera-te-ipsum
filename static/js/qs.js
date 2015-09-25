@@ -282,6 +282,9 @@ $(function() {
         "move": chosenMove.from + chosenMove.to,
       });
 
+      // Hack for "chess challenge" mode
+      setTimeout(fetchNewChessChallenge, 200);
+
       console.log(chosenMove);
 
       return true;
@@ -839,10 +842,12 @@ $(function() {
     });
   });
 
-  $("#qs-id-try-chessboard").click(function() {
+  function fetchNewChessChallenge() {
     var url = "/qs-api/u/" + credentials.username + "/chesspuzzles/generate";
     post(url).done(function(data) {
       presentItem(data.item);
     });
-  });
+  }
+
+  $("#qs-id-try-chessboard").click(fetchNewChessChallenge);
 });
