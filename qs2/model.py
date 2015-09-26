@@ -109,3 +109,39 @@ chess_answers = Table("chess_answers", metadata,
   Column("expired", Boolean, nullable=False),
   Column("answer_latency", Interval, nullable=True),
 )
+
+item_type = Enum("measured_variable",
+  name="item_type")
+
+items = Table("items", metadata,
+  Column("item_id", Integer, primary_key=True),
+  Column("item_key", String, nullable=False, index=True),
+  Column("type", item_type, nullable=False),
+  Column("user_id_owner", Integer, ForeignKey("users.user_id"), nullable=False),
+  Column("trigger_id", Integer, ForeignKey("triggers.trigger_id"), nullable=False),
+)
+
+measured_vars = Table("measured_vars", metadata,
+  Column("measured_var_id", Integer, primary_key=True),
+  Column("item_id", Integer, ForeignKey("items.item_id"), nullable=False),
+  Column("name", String, nullable=False),
+)
+
+measurements = Table("measurements", metadata,
+  Column("measurement_id", Integer, primary_key=True),
+  Column("measured_var_id", Integer, ForeignKey("measured_vars.measured_var_id"), nullable=False),
+  Column("req_id_creator", Integer, ForeignKey("requests.req_id")),
+  Column("timestamp", DateTimeTz, nullable=False, index=True),
+  Column("value", Numeric, nullable=False),
+  Column("unit_id", Integer, ForeignKey("measured_var_units.measured_var_unit_id"), nullable=False),
+)
+
+measured_var_units = Table("measured_var_units", metadata,
+  Column("measured_var_unit_id", Integer, primary_key=True),
+  Column("measured_var_id", Integer, ForeignKey("measured_vars.measured_var_id"), nullable=False),
+  Column("priority", Integer, nullable=False, default=0),
+  Column("unit_key", String, nullable=False),
+  Column("singular", String, nullable=False),
+  Column("plural", String, nullable=False),
+  Column("precision", Integer, nullable=False, default=0),
+)
