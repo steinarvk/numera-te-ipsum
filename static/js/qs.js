@@ -97,6 +97,12 @@ $(function() {
       return;
     }
 
+    if (item.type === "measurement") {
+      currentItem = item;
+      presentMeasurement(currentItem.measurement);
+      return;
+    }
+
     showMessage({
       style: "danger",
       header: "Not implemented yet!",
@@ -104,7 +110,28 @@ $(function() {
     });
   }
 
-  function presentEvent(ev, kind) {
+  function presentMeasurement(meas) {
+    var main = $("#qs-main-widget")[0],
+        username = credentials.username;
+
+    soy.renderElement(
+      main,
+      qs.core.measurement_panel,
+      {
+        name: meas.name,
+        units: meas.units,
+      }
+    );
+
+    control = modules.measurement.init(main, meas.units);
+
+    itemCallbacks.dismiss = function() {
+      control.die();
+      console.log("dismissed...");
+    }
+  }
+
+  function presentEvent(ev) {
     var main = $("#qs-main-widget")[0],
         username = credentials.username,
         t0 = moment(),
@@ -850,4 +877,32 @@ $(function() {
   }
 
   $("#qs-id-try-chessboard").click(fetchNewChessChallenge);
+
+  $("#qs-id-measurement-experiment").click(function() {
+    presentItem({
+      type: "measurement",
+      key: "body_temp",
+      measurement: {
+        name: "body temperature",
+        units: [
+          {id: "celsius",
+           singular: "degree Celsius",
+           plural: "degrees Celsius",
+           display: "Metric",
+           min: "0",
+           max: null,
+           step: "0.1",
+          },
+          {id: "fahrenheit",
+           singular: "degree Fahrenheit",
+           plural: "degrees Fahrenheit",
+           display: "American",
+           min: "0",
+           max: null,
+           step: "1",
+          },
+        ],
+      },
+    });
+  });
 });

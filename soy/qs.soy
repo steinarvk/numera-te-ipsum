@@ -66,6 +66,90 @@
   {/call}
 {/template}
 
+/** A measurement reporting panel. */
+{template .measurement_panel}
+  {@param name: string}
+  {@param units: list<[id: string, singular: string, plural: string, min: string, max: string, step: string, display: string]>}
+
+  {call .panel data="all"}
+    {param title: 'Report measurement' /}
+    {param content kind="html"}
+      {call .modal}
+        {param title: 'Pick time of measurement' /}
+        {param id: 'measurement-datetimepicker' /}
+        {param close_button: true /}
+        {param content kind="html"}
+          <div class="qs-measurement-datetimepicker">
+          </div>
+        {/param}
+        {param footer_content kind="html"}
+          {call .button}
+            {param class: 'qs-measurement-accept-datetimepicker' /}
+            {param style: 'success' /}
+            {param text: 'Accept' /}
+          {/call}
+          {call .button}
+            {param class: 'qs-measurement-time-now' /}
+            {param style: 'info' /}
+            {param text: 'Now' /}
+          {/call}
+        {/param}
+      {/call}
+
+      <div>
+        {$name} measured{sp}
+        <button type="button"
+                class="btn btn-info qs-measurement-time-button"
+                data-toggle="modal"
+                data-target="#qs-modal-measurement-datetimepicker"
+        >now</button>
+
+        <input type="hidden"
+               value="now"
+               id="qs-measurement-time">
+      </div>
+
+      <ul class="nav nav-tabs" role="tablist">
+        {foreach $u in $units}
+          <li role="presentation"
+              {if isFirst($u)}class="active"{/if}
+              >
+            <a href="#qs-measurement-tab-{$u.id}"
+               aria-controls="qs-measurement-tab-{$u.id}"
+               role="tab"
+               data-toggle="tab">
+               {$u.display}
+            </a>
+          </li>
+        {/foreach}
+      </ul>
+
+      <div class="tab-content">
+        {foreach $u in $units}
+          <div role="tabpanel"
+               class="tab-pane {if isFirst($u)}active{/if}"
+               id="qs-measurement-tab-{$u.id}">
+            <input type="number"
+                   value=""
+                   {if isNonnull($u.min)}
+                    min="{$u.min}"
+                   {/if}
+                   {if isNonnull($u.max)}
+                    max="{$u.max}"
+                   {/if}
+                   {if isNonnull($u.step)}
+                    step="{$u.step}"
+                   {/if}
+             >
+            <span class="qs-unit-{$u.id}-singular" style="display: none;">{$u.singular}</span>
+            <span class="qs-unit-{$u.id}-plural">{$u.plural}</span>
+          </div>
+        {/foreach}
+      </div>
+    {/param}
+  {/call}
+{/template}
+
 /** An event-reporting panel. */
 {template .event_panel}
   {@param event: string}
@@ -699,6 +783,12 @@
             <li>
               <a id="qs-id-report-an-event">
               Report an event
+              </a>
+            </li>
+            <li>&nbsp;</li>
+            <li>
+              <a id="qs-id-measurement-experiment">
+              Measurement (experiment)
               </a>
             </li>
             <li>&nbsp;</li>
