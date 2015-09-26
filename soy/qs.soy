@@ -97,12 +97,14 @@
       {/call}
 
       <div>
-        {$name} measured{sp}
+        <p>Measurement: {$name}</p>
+        <p>Time:{sp}
         <button type="button"
                 class="btn btn-info qs-measurement-time-button"
                 data-toggle="modal"
                 data-target="#qs-modal-measurement-datetimepicker"
         >now</button>
+        </p>
 
         <input type="hidden"
                value="now"
@@ -129,20 +131,25 @@
           <div role="tabpanel"
                class="tab-pane {if isFirst($u)}active{/if}"
                id="qs-measurement-tab-{$u.id}">
-            <input type="number"
-                   value=""
-                   {if isNonnull($u.min)}
-                    min="{$u.min}"
-                   {/if}
-                   {if isNonnull($u.max)}
-                    max="{$u.max}"
-                   {/if}
-                   {if isNonnull($u.step)}
-                    step="{$u.step}"
-                   {/if}
-             >
-            <span class="qs-unit-{$u.id}-singular" style="display: none;">{$u.singular}</span>
-            <span class="qs-unit-{$u.id}-plural">{$u.plural}</span>
+            <div class="input-group">
+              <input type="number"
+                     value=""
+                     class="form-control"
+                     {if isNonnull($u.min)}
+                      min="{$u.min}"
+                     {/if}
+                     {if isNonnull($u.max)}
+                      max="{$u.max}"
+                     {/if}
+                     {if isNonnull($u.step)}
+                      step="{$u.step}"
+                     {/if}
+               >
+              <div class="input-group-addon">
+                <span class="qs-unit-{$u.id}-singular" style="display: none;">{$u.singular}</span>
+                <span class="qs-unit-{$u.id}-plural">{$u.plural}</span>
+              </div>
+            </div>
           </div>
         {/foreach}
       </div>
