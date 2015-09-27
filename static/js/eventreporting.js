@@ -36,7 +36,7 @@ modules.eventreporting = (function() {
 
     root.find(".qs-event-datetimepicker").datetimepicker({
       minuteStep: 5,
-      todayBtn: true,
+      todayBtn: false,
       linkField: "qs-event-start-datetime-hidden",
       startDate: rangestart.toDate(),
       endDate: (rangeend !== null) ? rangeend.toDate() : null,
