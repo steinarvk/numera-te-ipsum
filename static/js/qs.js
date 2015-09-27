@@ -13,6 +13,7 @@ $(function() {
     onLoginFailure: onLoginFailure,
   });
   var currentItem = null;
+  var interruptedItem = null;
   var itemCallbacks = null;
 
   if (!credentials.ok) {
@@ -48,11 +49,18 @@ $(function() {
       itemCallbacks.dismiss();
     }
     itemCallbacks = null;
+    currentItem = null;
     $("#qs-main-widget").html("");
   }
 
   function loadNextItem() {
-    var item = inbox.pop();
+    var item = interruptedItem;
+
+    if (!item) {
+      item = inbox.pop();
+    }
+
+    interruptedItem = null;
 
     dismissCurrentItem();
 
@@ -69,6 +77,10 @@ $(function() {
   }
 
   function presentItem(item) {
+    if (currentItem !== null) {
+      interruptedItem = currentItem;
+    }
+
     dismissCurrentItem();
     
     itemCallbacks = {};
