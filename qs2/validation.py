@@ -51,9 +51,9 @@ def invalidate_chars(s, legal):
 
 def number_invalidator(min_, max_):
   def f(x):
-    if x < min_:
+    if min_ is not None and x < min_:
       return "{} is below minimal allowed value {}".format(x, min_)
-    if x > max_:
+    if max_ is not None and x > max_:
       return "{} is above maximal allowed value {}".format(x, max_)
   return f
 
@@ -101,6 +101,7 @@ Invalidators = {
   "question": lambda s: invalidate_length(s, (1, 1024)),
   "label": lambda s: invalidate_length(s, (1, 128)),
   "survey_value": number_invalidator(0, 1),
+  "measurement_value": number_invalidator(None, None),
   "datetime": datetime_invalidator(),
   "bool": set_invalidator(True, False),
   "trigger_spec": dict_invalidator(required={

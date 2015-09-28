@@ -150,6 +150,29 @@ def post_measurements(conn, user_id, data, req_id):
   mv_id = qs2.measurement.create_measured_var(conn, user_id, req_id, **args)
   return {"measured_var_id": mv_id}
 
+@user_page("measurements/<int:meas_id>/data", "POST", write=True)
+def post_measurement_data(conn, user_id, data, req_id, meas_id):
+  with conn.begin() as trans:
+    measured_var = qs2.measurement.check_owned_measured_var(conn, user_id, meas_id)
+    if not measured_var:
+      return oops("no such variable")
+    unit_id = qs2.measurement.fetch_unit_id_by_key(conn, meas_id, data["unit"])
+    if not unit_id:
+      return oops("no such unit")
+    value = qs2.validation.parse_as("measurement_value",
+      lambda n: decimal.Decimal(str(n)), data["value"])
+    timestamp = qs2.validation.parse_as("datetime",
+      qs2.qsjson.parse_json_string_datetime, data["timestamp"])
+    args = {
+      "unit_id": unit_id,
+      "measured_var_id": meas_id,
+      "timestamp": timestamp,
+      "comment": data.get("comment"),
+      "value": value,
+    }
+    datapoint_id = qs2.measurement.add_measurement(conn, req_id, **args)
+    return {"measurement_id": datapoint_id}
+
 @user_page("questions", "POST", write=True)
 def post_new_question(conn, user_id, data, req_id):
   delay_s = qs2.validation.parse_as("duration_seconds",
