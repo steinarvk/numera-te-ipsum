@@ -52,7 +52,7 @@ survey_answers = Table("survey_answers", metadata,
   Column("answer_latency", Interval, nullable=True),
 )
 
-query_type = Enum("question", "event",
+query_type = Enum("question", "event", "item",
   name="query_type")
 
 triggers = Table("triggers", metadata,
@@ -118,7 +118,7 @@ items = Table("items", metadata,
   Column("item_key", String, nullable=False, index=True),
   Column("type", item_type, nullable=False),
   Column("user_id_owner", Integer, ForeignKey("users.user_id"), nullable=False),
-  Column("trigger_id", Integer, ForeignKey("triggers.trigger_id"), nullable=False),
+  Column("trigger_id", Integer, ForeignKey("triggers.trigger_id"), nullable=True),
 )
 
 measured_vars = Table("measured_vars", metadata,

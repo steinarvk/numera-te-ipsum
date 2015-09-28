@@ -16,6 +16,7 @@ import qs2.flaskutil
 import qs2.logutil
 import qs2.captcha
 import qs2.chessgen
+import qs2.measurement
 
 import qs2.configutil
 import logging
@@ -137,6 +138,17 @@ def post_event_report(conn, user_id, evt_id, data, req_id):
       transform(rv["missing_report"], "start", qs2.qsjson.json_string_datetime)
       transform(rv["missing_report"], "end", qs2.qsjson.json_string_datetime)
     return rv
+
+@user_page("measurements", "POST", write=True)
+def post_measurements(conn, user_id, data, req_id):
+  args = {
+    "key": data["key"],
+    "name": data["name"],
+    "units": data["units"],
+    "trigger_spec": data["trigger"],
+  }
+  mv_id = qs2.measurement.create_measured_var(conn, user_id, req_id, **args)
+  return {"measured_var_id": mv_id}
 
 @user_page("questions", "POST", write=True)
 def post_new_question(conn, user_id, data, req_id):
