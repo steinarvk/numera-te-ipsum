@@ -47,7 +47,7 @@ def create_trigger(conn, user_id, trigger_type, spec):
 
 def create_item(conn, user_id, key, item_type, trigger_spec):
   trigger_id = create_trigger(conn, user_id, "item", spec=trigger_spec)
-  query = model.triggers.insert().values(
+  query = model.items.insert().values(
     item_key=key,
     type=item_type,
     user_id_owner=user_id,
