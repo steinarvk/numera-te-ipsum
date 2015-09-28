@@ -134,6 +134,7 @@ measurements = Table("measurements", metadata,
   Column("timestamp", DateTimeTz, nullable=False, index=True),
   Column("value", Numeric, nullable=False),
   Column("unit_id", Integer, ForeignKey("measured_var_units.measured_var_unit_id"), nullable=False),
+  Column("comment", String, nullable=True),
 )
 
 measured_var_units = Table("measured_var_units", metadata,
