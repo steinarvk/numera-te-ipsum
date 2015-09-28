@@ -150,6 +150,12 @@ def post_measurements(conn, user_id, data, req_id):
   mv_id = qs2.measurement.create_measured_var(conn, user_id, req_id, **args)
   return {"measured_var_id": mv_id}
 
+@user_page("measurements/<int:meas_id>/data", "GET")
+def get_measurement_item(conn, user_id, meas_id):
+  return {
+    "item": qs2.measurement.get_measurement_item(conn, user_id, meas_id),
+  }
+
 @user_page("measurements/<int:meas_id>/data", "POST", write=True)
 def post_measurement_data(conn, user_id, data, req_id, meas_id):
   with conn.begin() as trans:

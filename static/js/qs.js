@@ -891,30 +891,38 @@ $(function() {
   $("#qs-id-try-chessboard").click(fetchNewChessChallenge);
 
   $("#qs-id-measurement-experiment").click(function() {
-    presentItem({
-      type: "measurement",
-      key: "body_temp",
-      measurement: {
-        name: "body temperature",
-        units: [
-          {id: "celsius",
-           singular: "degree Celsius",
-           plural: "degrees Celsius",
-           display: "Metric",
-           min: "0",
-           max: null,
-           step: "0.1",
-          },
-          {id: "fahrenheit",
-           singular: "degree Fahrenheit",
-           plural: "degrees Fahrenheit",
-           display: "American",
-           min: "0",
-           max: null,
-           step: "1",
-          },
-        ],
-      },
-    });
+    presentItem(
+      {
+        "item": {
+          "item_id": 2, 
+          "key": "temp", 
+          "measurement": {
+            "name": "temperature", 
+            "units": [
+              {
+                "display": "degrees Celsius", 
+                "id": "celsius", 
+                "max": null, 
+                "min": null, 
+                "plural": "degrees Celsius", 
+                "singular": "degree Celsius", 
+                "step": 0
+              }, 
+              {
+                "display": "degrees Fahrenheit", 
+                "id": "fahrenheit", 
+                "max": null, 
+                "min": null, 
+                "plural": "degrees Fahrenheit", 
+                "singular": "degree Fahrenheit", 
+                "step": 0
+              }
+            ]
+          }, 
+          "type": "measurement"
+        }, 
+        "status": "ok"
+      }["item"]
+    );
   });
 });
