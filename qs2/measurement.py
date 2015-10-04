@@ -80,6 +80,19 @@ def get_measurement_item(conn, user_id, meas_id):
     },
   }
 
+@qs2.logutil.profiled("get_measurements")
+def get_measured_vars(conn, user_id):
+  query = sql.select([model.measured_vars],
+                     use_labels=True)\
+            .select_from(
+              model.measured_vars.join(model.items)
+            ).where(
+              (model.items.c.user_id_owner == user_id)
+            )
+  rows = sql_op(conn, "get measured var info", query).fetchall()
+  return [{"name": row.name, "id": row.measured_var_id} for row in rows]
+
+
 @qs2.logutil.profiled("check_owned_measured_var")
 def check_owned_measured_var(conn, user_id, meas_id):
   """Check the existence of a measured variable owned by a specific user (else return False)."""

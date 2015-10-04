@@ -139,6 +139,12 @@ def post_event_report(conn, user_id, evt_id, data, req_id):
       transform(rv["missing_report"], "end", qs2.qsjson.json_string_datetime)
     return rv
 
+@user_page("measurements", "GET")
+def get_measurements(conn, user_id):
+  return {
+    "measurements": qs2.measurement.get_measured_vars(conn, user_id),
+  }
+
 @user_page("measurements", "POST", write=True)
 def post_measurements(conn, user_id, data, req_id):
   args = {
