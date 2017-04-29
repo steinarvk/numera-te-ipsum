@@ -242,17 +242,22 @@ def get_pending_events_corrections(conn, user_id, limit=None):
     (model.event_record.c.status == "unreported")
   ).order_by(model.event_record.c.start.asc()).limit(limit)
   results = sql_op(conn, "fetch unreported events", query).fetchall()
+  evt_id_to_names_memo = {}
   def taskify(row):
     start = hacky_force_timezone(row.start)
     end = hacky_force_timezone(row.end)
     # TODO oh no, horrible, fix to use a join (late night!)
-    evt = fetch_event_type(conn, user_id, row.evt_id)
+    try:
+      evt_name = evt_id_to_names_memo[row.evt_id]
+    except KeyError:
+      evt_name = fetch_event_type(conn, user_id, row.evt_id).name
+      evt_id_to_names_memo[row.evt_id] = evt_name
     return {
       "type": "event",
       "subtype": "correct",
       "event_correct": {
         "event_type_id": row.evt_id,
-        "name": evt.name,
+        "name": evt_name,
         "start": qs2.qsjson.json_string_datetime(start),
         "end": qs2.qsjson.json_string_datetime(end),
       }
