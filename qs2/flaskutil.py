@@ -2,6 +2,7 @@ from flask import Flask, request
 import flask
 import functools
 import logging
+import time
 
 import qs2.operations
 import qs2.error
@@ -37,8 +38,15 @@ def user_page(app, engine, url, method, write=False):
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
       username = kwargs["username"]
+      t0 = time.time()
+      def report_stage(status):
+        t = time.time()
+        logging.info("serving %s %s to user %s: %s (after %f)", method, url, username, status, (t-t0))
+      report_stage("connecting")
       with engine.connect() as conn:
+        report_stage("authenticating")
         login_id = auth_user(conn)
+        report_stage("logging")
         with conn.begin() as trans:
           params = {
             "url": request.url,
@@ -48,10 +56,12 @@ def user_page(app, engine, url, method, write=False):
             "client_ip": request.environ.get("REMOTE_ADDR"),
           }
           req_id = qs2.operations.log_request(conn, **params)
+        report_stage("transacting")
         with conn.begin() as trans:
           check_user(conn, login_id, username)
           del kwargs["username"]
           try:
+            report_stage("getting user_id")
             kwargs["user_id"] = qs2.operations.get_user_id(conn, username)
           except Exception as e:
             logging.error("request %d failed:", req_id)
@@ -62,7 +72,9 @@ def user_page(app, engine, url, method, write=False):
           if write:
             kwargs["req_id"] = req_id
           try:
+            report_stage("performing operation core")
             rv = f(conn=conn, *args, **kwargs)
+            report_stage("performed operation core")
           except (qs2.error.ValidationFailed, qs2.error.OperationFailed) as e:
             response = flask.jsonify(
               status="error",

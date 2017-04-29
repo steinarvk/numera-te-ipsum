@@ -366,5 +366,6 @@ def get_pending(conn, user_id):
   return rv
 
 if __name__ == '__main__':
+  logging.info("starting server process")
   app.run(debug=True)
 
