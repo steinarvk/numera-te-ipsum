@@ -1,0 +1,6 @@
+.gitignore
+.git
+node_modules
+env
+bower_components
+junk
