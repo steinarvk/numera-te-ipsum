@@ -27,6 +27,8 @@ import datetime
 import pytz
 import hashlib
 
+import prometheus_client
+
 from qs2.error import ValidationFailed
 
 config = qs2.configutil.Config(os.environ["QS_CONFIG_FILE"])
@@ -35,6 +37,14 @@ qs2.logutil.setup_logging(filename=config["logging.filename"],
                           level=config.get("logging.level", "info"))
 app = Flask("qs2")
 engine = sqlalchemy.create_engine(config["database.url"])
+
+if config.get("monitoring.listen"):
+  metrics_port = int(config.get("monitoring.listen.port"))
+  metrics_host = config.get("monitoring.listen.host", "")
+  prometheus_client.start_http_server(metrics_port, metrics_host)
+  logging.info("serving metrics on %s:%d", metrics_host, metrics_port)
+else:
+  logging.info("not configured to serve metrics")
 
 if config.get("chess"):
   chesspuzzlegen = qs2.chessgen.IndexedGameCollection(

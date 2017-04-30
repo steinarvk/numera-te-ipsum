@@ -8,6 +8,21 @@ import qs2.operations
 import qs2.error
 import qs2.logutil
 
+from prometheus_client import (Counter, Histogram)
+
+metric_user_pages_requested = Counter(
+    "qs_user_pages_requested",
+    "User pages begun processing by page",
+    ["page"])
+metric_user_pages_finished = Counter(
+    "qs_user_pages_finished",
+    "User pages served by page",
+    ["page", "status"])
+metric_user_pages_latency = Histogram(
+    "qs_user_pages_latency",
+    "User page latency by page and status",
+    ["page", "status"])
+
 class AccessDenied(Exception):
   pass
 
@@ -31,10 +46,32 @@ def check_user(conn, login_id, username):
     logging.info("user IDs do not match: %d != %d", user_id, login_id)
     raise AccessDenied()
 
+def record_metrics_for_request(page):
+  def decorator(function):
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+      metric_user_pages_requested.labels(page).inc()
+      t0 = time.time()
+      rv = function(*args, **kwargs)
+      t1 = time.time()
+      dur = t1 - t0
+      try:
+          status = str(rv.status_code)
+      except Exception as e:
+          logging.exception(e)
+          status = "unknown"
+      metric_user_pages_finished.labels(page, status).inc()
+      metric_user_pages_latency.labels(page, status).observe(dur)
+      logging.info("served %s with status %s after %f", page, status, dur)
+      return rv
+    return wrapper
+  return decorator
+
 def user_page(app, engine, url, method, write=False):
   def wrap(f):
     @app.route("/u/<username>/" + url, methods=[method])
     @qs2.logutil.profiled(method + ":/u/<username>/" + url)
+    @record_metrics_for_request(url)
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
       username = kwargs["username"]
