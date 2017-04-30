@@ -12,6 +12,7 @@ import random
 import csv
 import json
 import pytz
+import functools
 
 from qs2 import ui
 import qs2.csvexport
@@ -26,6 +27,30 @@ from qs2.dbutil import create_trigger
 
 PRIORITY_NORMAL = 0
 PRIORITY_CORRECTION = -10
+
+from prometheus_client import (Counter, Histogram)
+
+metric_db_ops_begun = Counter(
+    "qs_db_ops_begun",
+    "Database operations begun",
+    ["op"])
+metric_db_op_latency = Histogram(
+    "qs_db_op_latency",
+    "Database operation latency",
+    ["op"])
+
+def record_metrics_for_op(name):
+  def decorator(function):
+    @functools.wraps(function)
+    def wrapper(*args, **kwargs):
+      metric_db_ops_begun.labels(name).inc()
+      t0 = time.time()
+      rv = function(*args, **kwargs)
+      t1 = time.time()
+      metric_db_op_latency.labels(name).observe(t1-t0)
+      return rv
+    return wrapper
+  return decorator
 
 class DbFetch(object):
   def __init__(self, conn, columns=[], **kwargs):
@@ -216,6 +241,7 @@ _implicit_trigger_columns = [
 ]
 
 @qs2.logutil.profiled("get_all_event_types")
+@record_metrics_for_op("get_all_event_types")
 def get_all_event_types(conn, user_id):
   columns = [model.event_types] + _implicit_trigger_columns
   query = sql.select(columns).\
@@ -226,6 +252,7 @@ def get_all_event_types(conn, user_id):
   return sql_op(conn, "fetch event types", query).fetchall()
 
 @qs2.logutil.profiled("get_all_questions")
+@record_metrics_for_op("get_all_questions")
 def get_all_questions(conn, user_id):
   columns = [model.survey_questions] + _implicit_trigger_columns
   query = sql.select(columns).\
@@ -236,6 +263,7 @@ def get_all_questions(conn, user_id):
   return map(dict, sql_op(conn, "fetch questions", query).fetchall())
 
 @qs2.logutil.profiled("get_pending_corrections")
+@record_metrics_for_op("get_pending_corrections")
 def get_pending_events_corrections(conn, user_id, limit=None):
   query = sql.select([model.event_record]).where(
     (model.event_record.c.user_id_owner == user_id) &
@@ -286,6 +314,7 @@ def get_question_challenge(question):
   }
 
 @qs2.logutil.profiled("get_pending_append")
+@record_metrics_for_op("get_pending_append")
 def get_pending_event_append(conn, user_id, event_type):
   # TODO, this is horrible, optimize query! (written very late at night)
   tail = fetch_event_report_tail(conn, user_id, event_type)
@@ -302,6 +331,7 @@ def get_pending_event_append(conn, user_id, event_type):
   }
 
 @qs2.logutil.profiled("get_pending_appends")
+@record_metrics_for_op("get_pending_appends")
 def get_pending_events_appends(conn, user_id, force=False, limit=None):
   columns = [model.event_types] + _implicit_trigger_columns
   joined = model.triggers.join(model.event_types)
@@ -319,6 +349,7 @@ def get_pending_events_appends(conn, user_id, force=False, limit=None):
   return rv, count, earliest
 
 @qs2.logutil.profiled("get_pending_events")
+@record_metrics_for_op("get_pending_events")
 def get_pending_events(conn, user_id, force=False, limit=None):
   crv, cc, cea = get_pending_events_corrections(conn, user_id, limit=limit)
   prv, pc, pea = get_pending_events_appends(conn, user_id, force=force, limit=limit)
@@ -329,6 +360,7 @@ def get_pending_events(conn, user_id, force=False, limit=None):
   return crv + prv, cc + pc, earliest
 
 @qs2.logutil.profiled("get_pending_questions")
+@record_metrics_for_op("get_pending_questions")
 def get_pending_questions(conn, user_id, columns=[], force=False, limit=None):
   if not columns:
     columns = [model.survey_questions] + _implicit_trigger_columns
@@ -382,6 +414,7 @@ def fetch_question(conn, user_id, question_id, *columns):
     return dict(row)
 
 @qs2.logutil.profiled("fetch_survey_question_answers")
+@record_metrics_for_op("fetch_survey_question_answers")
 def fetch_survey_question_answers(conn, user_id, question_id, t0=None, t1=None):
   condition = (
       (model.survey_answers.c.user_id_owner == user_id)
