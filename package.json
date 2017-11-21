@@ -1,18 +1,16 @@
 {
   "name": "numera-te-ipsum",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Quantified Self data collection and analysis web app",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
-    "url": "git@irrasjonal.net:qs2.git"
+    "url": "git@github.com:steinarvk/numera-te-ipsum.git"
   },
   "author": "Steinar V. Kaldager",
-  "license": "Closed source (for now)",
+  "license": "MIT",
   "devDependencies": {
     "grunt-bower-concat": "~0.5.0"
-  }
+  },
+  "private": true
 }
